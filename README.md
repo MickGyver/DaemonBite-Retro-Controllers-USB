@@ -6,7 +6,7 @@ The input lag for this adapter is minimal. Here is the result from a test with a
 
 | Controller | Samples | Average | Max | Min | Std Dev |
 | ------ | ------ | ------ | ------ | ------ | ------ | 
-| Original Mega Drive Controller | 2342 | 0.75ms | 1.28ms | 0.24ms | 0.29ms |
+| Original 3-Button Mega Drive Controller | 2342 | 0.75ms | 1.28ms | 0.24ms | 0.29ms |
 | 8bitdo M30 Wireless 2.4G | 2348 | 4.54ms | 8.05ms | 2.22ms | 1.31ms |
 
 The Mega Drive gamepad interface is based on this repository : https://github.com/jonthysell/SegaController but almost entirely rewritten and a lot of optimisations have been made.
