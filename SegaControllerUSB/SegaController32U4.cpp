@@ -104,6 +104,19 @@ word SegaController32U4::getStateMD()
           (bitRead(_inputReg2, DB9_PIN9_BIT) == LOW) ? _currentState |= SC_BTN_C : _currentState &= ~SC_BTN_C;
         }
       }
+      else // No Mega Drive controller is connected, use SMS/Atari mode
+      {
+        // Clear current state
+        _currentState = 0;
+        
+        // Read input pins for Up, Down, Left, Right, Fire1, Fire2
+        if (bitRead(_inputReg1, DB9_PIN1_BIT) == LOW) { _currentState |= SC_BTN_UP; }
+        if (bitRead(_inputReg1, DB9_PIN2_BIT) == LOW) { _currentState |= SC_BTN_DOWN; }
+        if (bitRead(_inputReg1, DB9_PIN3_BIT) == LOW) { _currentState |= SC_BTN_LEFT; }
+        if (bitRead(_inputReg1, DB9_PIN4_BIT) == LOW) { _currentState |= SC_BTN_RIGHT; }
+        if (bitRead(_inputReg2, DB9_PIN6_BIT) == LOW) { _currentState |= SC_BTN_A; }
+        if (bitRead(_inputReg2, DB9_PIN9_BIT) == LOW) { _currentState |= SC_BTN_B; }
+      }
     }
     else // Select pin is LOW
     {
@@ -122,8 +135,6 @@ word SegaController32U4::getStateMD()
           (bitRead(_inputReg2, DB9_PIN9_BIT) == LOW) ? _currentState |= SC_BTN_START : _currentState &= ~SC_BTN_START; 
         }
       }
-      else
-        _currentState = 0; // Reset buttons if no controller is connected
     }
   }
   else
@@ -131,25 +142,5 @@ word SegaController32U4::getStateMD()
     _ignoreCycles--;
   }
 
-  return _currentState;
-}
-
-word SegaController32U4::getStateSMS()
-{
-  // Clear current state
-  _currentState = 0;
-  
-  // Read input register(s)
-  _inputReg1 = PINF;
-  _inputReg2 = PINB;
-  
-  // Read input pins for Up, Down, Left, Right, Fire1, Fire2
-  if (bitRead(_inputReg1, DB9_PIN1_BIT) == LOW) { _currentState |= SC_BTN_UP; }
-  if (bitRead(_inputReg1, DB9_PIN2_BIT) == LOW) { _currentState |= SC_BTN_DOWN; }
-  if (bitRead(_inputReg1, DB9_PIN3_BIT) == LOW) { _currentState |= SC_BTN_LEFT; }
-  if (bitRead(_inputReg1, DB9_PIN4_BIT) == LOW) { _currentState |= SC_BTN_RIGHT; }
-  if (bitRead(_inputReg2, DB9_PIN6_BIT) == LOW) { _currentState |= SC_BTN_A; }
-  if (bitRead(_inputReg2, DB9_PIN9_BIT) == LOW) { _currentState |= SC_BTN_B; }
-  
   return _currentState;
 }

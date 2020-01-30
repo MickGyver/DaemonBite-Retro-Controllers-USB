@@ -63,8 +63,6 @@ class SegaController32U4 {
 
     word getStateMD();
 
-    word getStateSMS();
-
   private:
     word _currentState;
 

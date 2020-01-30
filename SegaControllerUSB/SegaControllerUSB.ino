@@ -40,8 +40,6 @@
 //  6     14  PB3
 //  7      6  PD7
 //  9     15  PB1
-//
-// Connect a slide switch to pins GND,GND and 2
 
 SegaController32U4 controller;
 
@@ -55,19 +53,12 @@ word lastState = 1;
 
 void setup()
 {
-  // Setup switch pin (2, PD1)
-  DDRD  &= ~B00000010; // input
-  PORTD |=  B00000010; // high to enable internal pull-up
-  
   Gamepad.begin(1);
 }
 
 void loop()
 {
-  if(PIND & B00000010)
-    currentState = controller.getStateMD();
-  else
-    currentState = controller.getStateSMS();
+  currentState = controller.getStateMD();
   sendState();
 }
 
