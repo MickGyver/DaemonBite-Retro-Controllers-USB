@@ -14,7 +14,6 @@ The Mega Drive gamepad interface is based on this repository : https://github.co
 ## Parts you need
 - Arduino Pro Micro (ATMega32U4)
 - Male end of Mega Drive controller extension (or DSUB 9Pin Male connector and some wires)
-- SPDT Switch (2.54mm/0.1" pitch)
 - Heat shrink tube (Ø ~20mm)
 - Micro USB cable
 
