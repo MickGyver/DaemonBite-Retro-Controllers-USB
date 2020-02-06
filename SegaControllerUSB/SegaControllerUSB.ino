@@ -52,8 +52,7 @@ word currentState = 0;
 word lastState = 1;
 
 void setup()
-{
-  Gamepad.begin(1);
+{ 
 }
 
 void loop()
