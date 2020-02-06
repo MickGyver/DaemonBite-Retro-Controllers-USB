@@ -21,15 +21,12 @@ The Mega Drive gamepad interface is based on this repository : https://github.co
 ## Wiring
 ![Assemble1](images/sega-usb-adapter-wiring.png)
 
-## How to assemble
+## How to assemble (please ignore the switch)
 ![Assemble1](images/sega-usb-adapter-1.png)
 ![Assemble1](images/sega-usb-adapter-2.png)  
 (The switch goes to pins GND-GND-2 even if the picture above shows it connected to GND-2-3)
 ![Assemble1](images/sega-usb-adapter-3.png)
 ![Assemble1](images/sega-usb-adapter-4.png)
-
-## The Switch
-When the switch is in the position closer to the USB port of the Arduino Pro Micro, the adapter will be in SMS/Atari mode. When it is in the other position, it will be in Mega Drive/Genesis mode.
 
 ## License
 This project is licensed under the GNU General Public License v3.0.
