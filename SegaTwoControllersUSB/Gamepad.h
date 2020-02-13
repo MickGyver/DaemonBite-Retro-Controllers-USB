@@ -29,12 +29,6 @@
 #include <Arduino.h>
 #include "HID.h"
 
-// NOTE: To make this work on the MiSTer (or possibly other Linux distros), 
-// you need to edit USBDesc.h like follows. Change:
-// #define ISERIAL         3
-// to
-// #define ISERIAL         0
-
 // The numbers after colon are bit fields, meaning how many bits the field uses.
 // Remove those if there are problems
 typedef struct {
@@ -66,6 +60,7 @@ class Gamepad_ : public PluggableUSBModule
   protected:
     int getInterface(uint8_t* interfaceCount);
     int getDescriptor(USBSetup& setup);
+    uint8_t getShortName(char *name);
     bool setup(USBSetup& setup);
     
     uint8_t epType[1];

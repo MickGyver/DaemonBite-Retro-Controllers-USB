@@ -143,3 +143,8 @@ void Gamepad_::send()
 {
   USB_Send(pluggedEndpoint | TRANSFER_RELEASE, &_GamepadReport, sizeof(GamepadReport));
 }
+
+uint8_t Gamepad_::getShortName(char *name)
+{
+  return 0;
+}

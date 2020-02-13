@@ -66,6 +66,7 @@ class Gamepad_ : public PluggableUSBModule
   protected:
     int getInterface(uint8_t* interfaceCount);
     int getDescriptor(USBSetup& setup);
+    uint8_t getShortName(char *name);
     bool setup(USBSetup& setup);
     
     uint8_t epType[1];

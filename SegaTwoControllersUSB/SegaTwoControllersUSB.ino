@@ -21,12 +21,6 @@
  *  
  */
 
-// NOTE: To make this work on the MiSTer (or possibly other Linux distros), 
-// you need to edit USBDesc.h like follows. Change:
-// #define ISERIAL         3
-// to
-// #define ISERIAL         0
-
 #include "SegaControllers32U4.h"
 #include "Gamepad.h"
 
