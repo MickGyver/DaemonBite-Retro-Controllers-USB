@@ -67,6 +67,11 @@
 
 //#define BEETLE
 
+// Adjust the sensitivity of spinner. >= 1
+// For arduino shield spinner set it to 1.
+// For 600PPR spinners set it to 8..10 for comfortable control.
+#define SPINNER_SENSITIVITY 10
+
 // serial for special support in MiSTer 
 const char *gp_serial = "MiSTer PD/SP v1";
 
@@ -180,20 +185,18 @@ void sendState(byte idx)
     {
       static int prev[2] = {0,0};
       int16_t diff = drvpos[idx] - prev[idx];
-      if(diff)
+
+      if(diff > SPINNER_SENSITIVITY)
       {
-        if(diff>0)
-        {
-          newR = 1;
-          prev[idx]++;
-          //Serial.println("RIGHT");
-        }
-        else
-        {
-          newL = 1;
-          prev[idx]--;
-          //Serial.println("LEFT");
-        }
+        newR = 1;
+        prev[idx] += SPINNER_SENSITIVITY;
+        //Serial.println("RIGHT");
+      }
+      else if(diff < -SPINNER_SENSITIVITY)
+      {
+        newL = 1;
+        prev[idx] -= SPINNER_SENSITIVITY;
+        //Serial.println("LEFT");
       }
     }
   }
