@@ -164,7 +164,7 @@ void drv_proc(int8_t idx)
   if(diff == 3) 
   {
     drvpos[idx] += 10;
-    if(sp_clamp[idx] < sp_max-1) sp_clamp[idx]++;
+    if(sp_clamp[idx] < sp_max) sp_clamp[idx]++;
   }
   if(diff == 1) 
   {
