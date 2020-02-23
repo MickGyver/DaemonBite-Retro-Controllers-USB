@@ -65,15 +65,22 @@
 // Note: spinners pins must support interrupts!
 //
 
+///////////////// Customizable settings /////////////////////////
+
+//uncomment following line for Beetle board pin mapping.
 //#define BEETLE
 
-// Adjust the sensitivity of spinner. >= 1
-// For arduino shield spinner set it to 1.
-// For 600PPR spinners set it to 8..10 for comfortable control.
-#define SPINNER_SENSITIVITY 10
+// Spinner pulses per revolution
+// For arduino shield spinner: 20
+#define SPINNER_PPR 20
 
-// serial for special support in MiSTer 
-const char *gp_serial = "MiSTer PD/SP v1";
+// Comment it to dosable paddle emulation by spinner
+#define PADDLE_EMU
+
+// Optional parameter. Leave it commented out.
+//#define SPINNER_SENSITIVITY 1
+
+/////////////////////////////////////////////////////////////////
 
 // pins map
 #ifdef BEETLE
@@ -87,7 +94,19 @@ const char *gp_serial = "MiSTer PD/SP v1";
   const int8_t pbtnpin[2]   = {4,3};         // paddle button
   const int8_t pdlpin[2]    = {A0,A1};       // paddle pot
 #endif
+
 ////////////////////////////////////////////////////////
+
+#ifndef SPINNER_SENSITIVITY
+  #if SPINNER_PPR < 50
+    #define SPINNER_SENSITIVITY 1
+  #else
+    #define SPINNER_SENSITIVITY 2
+  #endif
+#endif
+
+// ID for special support in MiSTer 
+const char *gp_serial = "MiSTer PD/SP v1";
 
 #include <ResponsiveAnalogRead.h> 
 #include "Gamepad.h"
@@ -97,6 +116,7 @@ ResponsiveAnalogRead analog[2] = {ResponsiveAnalogRead(pdlpin[0], true),Responsi
 
 int8_t pdlena[2]  = {0,0};
 uint16_t drvpos[2];
+int16_t drvX[2] = {0,0};
 
 void setup()
 {
@@ -129,6 +149,9 @@ void loop()
   sendState(1);
 }
 
+const uint16_t sp_max = ((SPINNER_PPR*4*270UL)/360);
+int32_t sp_clamp[2] = {0,0};
+
 void drv_proc(int8_t idx)
 {
   static int8_t prev[2];
@@ -138,8 +161,16 @@ void drv_proc(int8_t idx)
   int8_t spval = (b << 1) | (b^a);
   int8_t diff = (prev[idx] - spval)&3;
 
-  if(diff == 3) drvpos[idx]++;
-  if(diff == 1) drvpos[idx]--;
+  if(diff == 3) 
+  {
+    drvpos[idx] += 10;
+    if(sp_clamp[idx] < sp_max-1) sp_clamp[idx]++;
+  }
+  if(diff == 1) 
+  {
+    drvpos[idx] -= 10;
+    if(sp_clamp[idx] > 0) sp_clamp[idx]--;
+  }
 
   prev[idx] = spval;
 }
@@ -154,13 +185,15 @@ void drv1_isr()
   drv_proc(1);
 }
 
+const int16_t sp_step = (SPINNER_PPR*10)/(20*SPINNER_SENSITIVITY);
+
 void sendState(byte idx)
 {
   // LEDs off
   TXLED1; //RXLED1;
 
   analog[idx].update();
-  
+
   // paddle
   int8_t newA = !digitalRead(pbtnpin[idx]);
   //int8_t newB = 0; // reserved for paddles mixed in a single USB controller.
@@ -183,24 +216,30 @@ void sendState(byte idx)
   {
     if(!Gamepad[idx]._GamepadReport.b3 && !Gamepad[idx]._GamepadReport.b4)
     {
-      static int prev[2] = {0,0};
+      static uint16_t prev[2] = {0,0};
       int16_t diff = drvpos[idx] - prev[idx];
 
-      if(diff > SPINNER_SENSITIVITY)
+      if(diff >= sp_step)
       {
         newR = 1;
-        prev[idx] += SPINNER_SENSITIVITY;
+        prev[idx] += sp_step;
         //Serial.println("RIGHT");
       }
-      else if(diff < -SPINNER_SENSITIVITY)
+      else if(diff <= -sp_step)
       {
         newL = 1;
-        prev[idx] -= SPINNER_SENSITIVITY;
+        prev[idx] -= sp_step;
         //Serial.println("LEFT");
       }
     }
+
+#ifdef PADDLE_EMU
+    uint16_t val = (sp_clamp[idx]*255)/sp_max;
+    newX = val ^ 0x80;
+#endif
+
   }
-  
+
   int8_t diff = newX - Gamepad[idx]._GamepadReport.X;
 
   // Only report controller state if it has changed
