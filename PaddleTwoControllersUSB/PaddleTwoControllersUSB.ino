@@ -80,6 +80,9 @@
 // Optional parameter. Leave it commented out.
 //#define SPINNER_SENSITIVITY 1
 
+// Set it to 1 if you want only single input device.
+#define DEV_NUM 2
+
 /////////////////////////////////////////////////////////////////
 
 // pins map
@@ -111,46 +114,16 @@ const char *gp_serial = "MiSTer PD/SP v1";
 #include <ResponsiveAnalogRead.h> 
 #include "Gamepad.h"
 
-Gamepad_ Gamepad[2];
+Gamepad_ Gamepad[DEV_NUM];
 ResponsiveAnalogRead analog[2] = {ResponsiveAnalogRead(pdlpin[0], true),ResponsiveAnalogRead(pdlpin[1], true)};
 
 int8_t pdlena[2]  = {0,0};
 uint16_t drvpos[2];
 int16_t drvX[2] = {0,0};
 
-void setup()
-{
-  float snap = .01;
-  float thresh = 8.0;
-
-  for(int idx=0; idx<2; idx++)
-  {
-    Gamepad[idx].reset();
-
-    pinMode(encpin[idx][0], INPUT_PULLUP);
-    pinMode(encpin[idx][1], INPUT_PULLUP);
-    pinMode(dbtnpin[idx],   INPUT_PULLUP);
-    drv_proc(idx);
-    drvpos[idx] = 0;
-    attachInterrupt(digitalPinToInterrupt(encpin[idx][0]), idx ? drv1_isr : drv0_isr, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(encpin[idx][1]), idx ? drv1_isr : drv0_isr, CHANGE);
-    
-    pdlena[idx] = 0;
-    pinMode(pbtnpin[idx],   INPUT_PULLUP);
-    pinMode(pdlpin[idx],    INPUT);
-    analog[idx].setSnapMultiplier(snap);
-    analog[idx].setActivityThreshold(thresh);
-  }
-}
-
-void loop()
-{
-  sendState(0);
-  sendState(1);
-}
-
-const uint16_t sp_max = ((SPINNER_PPR*4*270UL)/360);
-int32_t sp_clamp[2] = {0,0};
+#define SP_MAX ((SPINNER_PPR*4*270UL)/360)
+const uint16_t sp_max = SP_MAX;
+int32_t sp_clamp[2] = {SP_MAX/2,SP_MAX/2};
 
 void drv_proc(int8_t idx)
 {
@@ -185,35 +158,66 @@ void drv1_isr()
   drv_proc(1);
 }
 
-const int16_t sp_step = (SPINNER_PPR*10)/(20*SPINNER_SENSITIVITY);
+void setup()
+{
+  float snap = .01;
+  float thresh = 8.0;
 
-void sendState(byte idx)
+  for(int idx=0; idx<DEV_NUM; idx++)
+  {
+    Gamepad[idx].reset();
+
+    pinMode(encpin[idx][0], INPUT_PULLUP);
+    pinMode(encpin[idx][1], INPUT_PULLUP);
+    pinMode(dbtnpin[idx],   INPUT_PULLUP);
+    drv_proc(idx);
+    drvpos[idx] = 0;
+    attachInterrupt(digitalPinToInterrupt(encpin[idx][0]), idx ? drv1_isr : drv0_isr, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(encpin[idx][1]), idx ? drv1_isr : drv0_isr, CHANGE);
+    
+    pdlena[idx] = 0;
+    pinMode(pbtnpin[idx],   INPUT_PULLUP);
+    pinMode(pdlpin[idx],    INPUT);
+    analog[idx].setSnapMultiplier(snap);
+    analog[idx].setActivityThreshold(thresh);
+  }
+}
+
+const int16_t sp_step = (SPINNER_PPR*10)/(20*SPINNER_SENSITIVITY);
+void loop()
 {
   // LEDs off
   TXLED1; //RXLED1;
 
-  analog[idx].update();
-
-  // paddle
-  int8_t newA = !digitalRead(pbtnpin[idx]);
-  //int8_t newB = 0; // reserved for paddles mixed in a single USB controller.
-  int8_t newX = 0;
-  int8_t newY = 0;
-
-  // spinner
-  int8_t newC = !digitalRead(dbtnpin[idx]);
-  int8_t newR = 0;
-  int8_t newL = 0;
-
-  if(newA) pdlena[idx] = 1;
-  if(newC) pdlena[idx] = 0;
-
-  if(pdlena[idx])
+  for(int idx=0; idx<DEV_NUM; idx++)
   {
-    newX = (analog[idx].getValue()>>2) ^ 0x80;
-  }
-  else
-  {
+    analog[idx].update();
+
+    // paddle
+    int8_t newA = !digitalRead(pbtnpin[idx]);
+    //int8_t newB = 0; // reserved for paddles mixed in a single USB controller.
+    int8_t newX = 0;
+    int8_t newY = 0;
+
+    // spinner
+    int8_t newC = !digitalRead(dbtnpin[idx]);
+    int8_t newR = 0;
+    int8_t newL = 0;
+
+    if(newA) pdlena[idx] = 1;
+    if(newC) pdlena[idx] = 0;
+
+    if(pdlena[idx])
+    {
+      newX = (analog[idx].getValue()>>2);
+    }
+    else
+    {
+      #ifdef PADDLE_EMU
+        newX = ((sp_clamp[idx]*255)/sp_max);
+      #endif
+    }
+
     if(!Gamepad[idx]._GamepadReport.b3 && !Gamepad[idx]._GamepadReport.b4)
     {
       static uint16_t prev[2] = {0,0};
@@ -223,38 +227,29 @@ void sendState(byte idx)
       {
         newR = 1;
         prev[idx] += sp_step;
-        //Serial.println("RIGHT");
       }
       else if(diff <= -sp_step)
       {
         newL = 1;
         prev[idx] -= sp_step;
-        //Serial.println("LEFT");
       }
     }
 
-#ifdef PADDLE_EMU
-    uint16_t val = (sp_clamp[idx]*255)/sp_max;
-    newX = val ^ 0x80;
-#endif
+    int8_t diff = newX - Gamepad[idx]._GamepadReport.X;
 
-  }
-
-  int8_t diff = newX - Gamepad[idx]._GamepadReport.X;
-
-  // Only report controller state if it has changed
-  if (diff
-    || ((Gamepad[idx]._GamepadReport.b0 ^ newA) & 1)
-    || ((Gamepad[idx]._GamepadReport.b2 ^ newC) & 1)
-    || ((Gamepad[idx]._GamepadReport.b3 ^ newL) & 1)
-    || ((Gamepad[idx]._GamepadReport.b4 ^ newR) & 1))
-  {
-    //if(!idx) Serial.println(newX);
-    Gamepad[idx]._GamepadReport.X  = newX;
-    Gamepad[idx]._GamepadReport.b0 = newA;
-    Gamepad[idx]._GamepadReport.b2 = newC;
-    Gamepad[idx]._GamepadReport.b3 = newL;
-    Gamepad[idx]._GamepadReport.b4 = newR;
-    Gamepad[idx].send();
+    // Only report controller state if it has changed
+    if (diff
+      || ((Gamepad[idx]._GamepadReport.b0 ^ newA) & 1)
+      || ((Gamepad[idx]._GamepadReport.b2 ^ newC) & 1)
+      || ((Gamepad[idx]._GamepadReport.b3 ^ newL) & 1)
+      || ((Gamepad[idx]._GamepadReport.b4 ^ newR) & 1))
+    {
+      Gamepad[idx]._GamepadReport.X  = newX;
+      Gamepad[idx]._GamepadReport.b0 = newA;
+      Gamepad[idx]._GamepadReport.b2 = newC;
+      Gamepad[idx]._GamepadReport.b3 = newL;
+      Gamepad[idx]._GamepadReport.b4 = newR;
+      Gamepad[idx].send();
+    }
   }
 }
