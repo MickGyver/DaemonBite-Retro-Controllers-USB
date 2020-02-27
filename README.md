@@ -1,6 +1,6 @@
 # DaemonBite Retro Controllers To USB Adapters
 ## Introduction
-This is a collection of easy to build adapters for connecting Mega Drive/Genesis (3/6-button), Master System, Atari, Commodore, Amiga (incl. CD32) controllers to USB. Support for more controllers is on the way (NES, SNES, NeoGeo etc.).
+This is a collection of easy to build adapters for connecting SNES, NES, Mega Drive/Genesis (3/6-button), Master System, Atari, Commodore, Amiga (incl. CD32) controllers to USB. Support for more controllers is on the way (Sega Saturn, NeoGeo etc.).
 
 The input lag for these adapters is minimal. Here is the result of the Sega controller adapter from a test with a 1ms polling rate on a MiSTer:
 
