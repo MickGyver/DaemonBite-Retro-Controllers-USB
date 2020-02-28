@@ -134,12 +134,12 @@ void drv_proc(int8_t idx)
   int8_t spval = (b << 1) | (b^a);
   int8_t diff = (prev[idx] - spval)&3;
 
-  if(diff == 3) 
+  if(diff == 1) 
   {
     drvpos[idx] += 10;
     if(sp_clamp[idx] < sp_max) sp_clamp[idx]++;
   }
-  if(diff == 1) 
+  if(diff == 3) 
   {
     drvpos[idx] -= 10;
     if(sp_clamp[idx] > 0) sp_clamp[idx]--;
@@ -183,6 +183,7 @@ void setup()
   }
 }
 
+GamepadReport rep;
 const int16_t sp_step = (SPINNER_PPR*10)/(20*SPINNER_SENSITIVITY);
 void loop()
 {
@@ -192,63 +193,55 @@ void loop()
   for(int idx=0; idx<DEV_NUM; idx++)
   {
     analog[idx].update();
+    rep.buttons = 0;
+    rep.dial = 0;
 
-    // paddle
-    int8_t newA = !digitalRead(pbtnpin[idx]);
-    //int8_t newB = 0; // reserved for paddles mixed in a single USB controller.
-    int8_t newX = 0;
-    int8_t newY = 0;
-
-    // spinner
-    int8_t newC = !digitalRead(dbtnpin[idx]);
-    int8_t newR = 0;
-    int8_t newL = 0;
-
-    if(newA) pdlena[idx] = 1;
-    if(newC) pdlena[idx] = 0;
-
+    // paddle button
+    if(!digitalRead(pbtnpin[idx]))
+    {
+      pdlena[idx] = 1;
+      rep.b2 = 1;
+    }
+    
+    // spinner button
+    if(!digitalRead(dbtnpin[idx]))
+    {
+      pdlena[idx] = 0;
+      rep.b2 = 1;
+    }
+    
     if(pdlena[idx])
     {
-      newX = (analog[idx].getValue()>>2);
+      rep.dial = (analog[idx].getValue()>>2);
     }
     else
     {
       #ifdef PADDLE_EMU
-        newX = ((sp_clamp[idx]*255)/sp_max);
+        rep.dial = ((sp_clamp[idx]*255)/sp_max);
       #endif
     }
 
-    if(!Gamepad[idx]._GamepadReport.b3 && !Gamepad[idx]._GamepadReport.b4)
+    if(!Gamepad[idx]._GamepadReport.b0 && !Gamepad[idx]._GamepadReport.b1)
     {
       static uint16_t prev[2] = {0,0};
       int16_t diff = drvpos[idx] - prev[idx];
 
       if(diff >= sp_step)
       {
-        newR = 1;
+        rep.b1 = 1;
         prev[idx] += sp_step;
       }
       else if(diff <= -sp_step)
       {
-        newL = 1;
+        rep.b0 = 1;
         prev[idx] -= sp_step;
       }
     }
 
-    int8_t diff = newX - Gamepad[idx]._GamepadReport.X;
-
     // Only report controller state if it has changed
-    if (diff
-      || ((Gamepad[idx]._GamepadReport.b0 ^ newA) & 1)
-      || ((Gamepad[idx]._GamepadReport.b2 ^ newC) & 1)
-      || ((Gamepad[idx]._GamepadReport.b3 ^ newL) & 1)
-      || ((Gamepad[idx]._GamepadReport.b4 ^ newR) & 1))
+    if (memcmp(&Gamepad[idx]._GamepadReport, &rep, sizeof(GamepadReport)))
     {
-      Gamepad[idx]._GamepadReport.X  = newX;
-      Gamepad[idx]._GamepadReport.b0 = newA;
-      Gamepad[idx]._GamepadReport.b2 = newC;
-      Gamepad[idx]._GamepadReport.b3 = newL;
-      Gamepad[idx]._GamepadReport.b4 = newR;
+      Gamepad[idx]._GamepadReport = rep;
       Gamepad[idx].send();
     }
   }

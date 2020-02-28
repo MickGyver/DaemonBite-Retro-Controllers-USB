@@ -31,32 +31,26 @@
 
 extern const char* gp_serial;
 
-// NOTE: To make this work on the MiSTer (or possibly other Linux distros), 
-// you need to edit USBDesc.h like follows. Change:
-// #define ISERIAL         3
-// to
-// #define ISERIAL         0
-
 // The numbers after colon are bit fields, meaning how many bits the field uses.
 // Remove those if there are problems
 typedef struct {
   union 
   {
     struct {
-      bool  b0: 1 ;
-      bool  b1: 1 ;
-      bool  b2: 1 ;
-      bool  b3: 1 ;
-      bool  b4: 1 ;
-      bool  b5: 1 ;
-      bool  b6: 1 ;
-      bool  b7: 1 ; 
+      bool  b0:  1;
+      bool  b1:  1;
+      bool  b2:  1;
+      bool  b3:  1;
+      bool  b4:  1;
+      bool  b5:  1;
+      bool  b6:  1;
+      bool  b7:  1; 
     };
     uint8_t buttons;
   };
-  int8_t X  ;
-  int8_t Y  ;  
   
+  int8_t dial;
+
 } GamepadReport;
 
 
