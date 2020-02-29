@@ -109,7 +109,9 @@
 #endif
 
 // ID for special support in MiSTer 
-const char *gp_serial = "MiSTer PD/SP v1";
+// ATT: 20 chars max (including NULL at the end) according to Arduino source code.
+// Additionally serial number is used to differentiate arduino projects to have different button maps!
+const char *gp_serial = "MiSTer-S1 Spinner";
 
 #include <ResponsiveAnalogRead.h> 
 #include "Gamepad.h"
