@@ -23,18 +23,14 @@
 
 #include "Gamepad.h"
 
+// ATT: 20 chars max (including NULL at the end) according to Arduino source code.
+// Additionally serial number is used to differentiate arduino projects to have different button maps!
+const char *gp_serial = "NES/SNES to USB";
+
 #define GAMEPAD_COUNT 2     // NOTE: No more than TWO gamepads are possible at the moment due to a USB HID issue.
-#define GAMEPAD_COUNT_MAX 4 // NOTE: For some reason, can't have more than two gamepads without serial breaking. Can someone figure out why?
-                            //       (It has something to do with how Arduino handles HID devices)
-#define SNES 0
-#define NES  1
-#define GPTYPE NES          // NOTE: Set gamepad type here (NES or SNES)! :)
+
 #define BUTTON_READ_DELAY 300 // Button read delay in µs
 
-#define UP    0x01
-#define DOWN  0x02
-#define LEFT  0x04
-#define RIGHT 0x08
 
 // Wire it all up according to the following table:
 //
@@ -49,75 +45,66 @@
 // D1   (GP3: DATA)          A2  (PF5, Gamepad 3)
 // D1   (GP4: DATA)          A3  (PF4, Gamepad 4)
 
+const byte LATCH = 2;
+const byte CLOCK = 3;
+const byte DIN[4] = {A0,A1,A2,A3};
+
 // Set up USB HID gamepads
 Gamepad_ Gamepad[GAMEPAD_COUNT];
 
 // Controllers
-uint16_t buttons[GAMEPAD_COUNT_MAX] = {0,0,0,0};
-uint16_t buttonsPrev[GAMEPAD_COUNT_MAX] = {0,0,0,0};
-uint8_t gpBit[GAMEPAD_COUNT_MAX] = {B10000000,B01000000,B00100000,B00010000};
-uint16_t btnBitsSnes[12] = {0x200,0x800,0x8000,0x4000,UP,DOWN,LEFT,RIGHT,0x100,0x400,0x1000,0x2000};
-uint16_t btnBitsNes[8] =  {0x100,0x200,0x8000,0x4000,UP,DOWN,LEFT,RIGHT};
-uint16_t *btnBits;
+uint32_t buttons[4] = {0,0,0,0};
+uint32_t buttons_old[4] = {0,0,0,0};
 uint8_t gp = 0;
-uint8_t gpType = GPTYPE;
-uint8_t buttonCount = 0;
 
 // Timing
-long microsNow = 0;
-long microsButtons = 0;
+unsigned long microsButtons = 0;
 
 void setup()
 {
-  // Setup latch and clock pins (2,3 or PD1, PD0)
-  DDRD  |=  B00000011; // output
-  PORTD &= ~B00000011; // low
+  for(gp=0; gp<4; gp++) pinMode(DIN[gp], INPUT_PULLUP);
 
-  // Setup data pins (A0-A3 or PF7-PF4)
-  DDRF  &= ~B11110000; // inputs
-  PORTF |=  B11110000; // enable internal pull-ups
+  pinMode(LATCH, OUTPUT);
+  pinMode(CLOCK, OUTPUT);
 
-  if(gpType == SNES) {
-    buttonCount = 12;
-    btnBits = btnBitsSnes;
-  }
-  else {
-    buttonCount = 8;
-    btnBits = btnBitsNes;
-  }
+  digitalWrite(LATCH, LOW);
+  digitalWrite(CLOCK, LOW);
+
+  for(gp=0; gp<GAMEPAD_COUNT; gp++) Gamepad[gp].reset();
 }
 
 void loop()
 {
-  // Get current time
-  microsNow = micros();
-
   // See if enough time has passed since last button read
-  if(microsNow > microsButtons+BUTTON_READ_DELAY)
-  {    
-    // Pulse latch
+  if((micros()-microsButtons) > BUTTON_READ_DELAY)
+  {
     sendLatch();
 
-    for(uint8_t btn=0; btn<buttonCount; btn++)
+    for(int i=0; i<32; i++)
     {
-      for(gp=0; gp<GAMEPAD_COUNT; gp++)
-        (PINF & gpBit[gp]) ? buttons[gp] &= ~btnBits[btn] : buttons[gp] |= btnBits[btn];
+      for(gp=0; gp<4; gp++) buttons[gp] = (buttons[gp]>>1) | (((uint32_t)~digitalRead(DIN[gp]))<<31);
       sendClock();
     }
 
-    microsButtons = microsNow+100;
-  }
-  
-  for(gp=0; gp<GAMEPAD_COUNT; gp++)
-  {
-    // Has any buttons changed state?
-    if (buttons[gp] != buttonsPrev[gp])
+    microsButtons = micros();
+
+    for(gp=0; gp<4; gp++)
     {
-      Gamepad[gp]._GamepadReport.buttons = buttons[gp] >> 8;
-      Gamepad[gp]._GamepadReport.Y = ((buttons[gp] & DOWN) >> 1) - (buttons[gp] & UP);
-      Gamepad[gp]._GamepadReport.X = ((buttons[gp] & RIGHT) >> 3) - ((buttons[gp] & LEFT) >> 2);
-      buttonsPrev[gp] = buttons[gp];
-      Gamepad[gp].send();
+      if((buttons[gp] & 0xFF00) == 0xFF00) buttons[gp] &= 0xFF; // NES pad
+      else if((buttons[gp] & 0xF000) == 0x2000) buttons[gp] = (buttons[gp] & 0xFFF) | ((buttons[gp]>>4) & 0xFFFF000); // SNES NTT;
+      else buttons[gp] &= 0xFFF; // SNES generic
+    }
+
+    for(gp=0; gp<GAMEPAD_COUNT; gp++)
+    {
+      // Has any buttons changed state?
+      if (buttons[gp] != buttons_old[gp])
+      {
+        buttons_old[gp] = buttons[gp];
+        Gamepad[gp]._GamepadReport.buttons = (buttons[gp] & 0xF) | ((buttons[gp]>>4) & ~0xF);
+        Gamepad[gp]._GamepadReport.hat = dpad2hat(buttons[gp]);
+        Gamepad[gp].send();
+      }
     }
   }
 }
@@ -125,17 +112,38 @@ void loop()
 void sendLatch()
 {
   // Send a latch pulse to (S)NES controller(s)
-  PORTD |=  B00000010; // Set HIGH
+  digitalWrite(LATCH, HIGH);
   delayMicroseconds(12);
-  PORTD &= ~B00000010; // Set LOW
+  digitalWrite(LATCH, LOW);
   delayMicroseconds(6); 
 }
 
 void sendClock()
 {
   // Send a clock pulse to (S)NES controller(s)
-  PORTD |=  B10000001; // Set HIGH
+  digitalWrite(CLOCK, HIGH);
   delayMicroseconds(6);
-  PORTD &= ~B10000001; // Set LOW
-  delayMicroseconds(6); 
+  digitalWrite(CLOCK, LOW);
+  delayMicroseconds(6);
+}
+
+#define UP    0x10
+#define DOWN  0x20
+#define LEFT  0x40
+#define RIGHT 0x80
+
+uint8_t dpad2hat(uint8_t dpad)
+{
+  switch(dpad & (UP|DOWN|LEFT|RIGHT))
+  {
+    case UP:         return 0;
+    case UP|RIGHT:   return 1;
+    case RIGHT:      return 2;
+    case DOWN|RIGHT: return 3;
+    case DOWN:       return 4;
+    case DOWN|LEFT:  return 5;
+    case LEFT:       return 6;
+    case UP|LEFT:    return 7;
+  }
+  return 15;
 }

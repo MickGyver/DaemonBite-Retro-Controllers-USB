@@ -24,38 +24,35 @@
  *  
  */
 
-#pragma once
-
 #include "Gamepad.h"
 
 static const uint8_t _hidReportDescriptor[] PROGMEM = {
   0x05, 0x01,                       // USAGE_PAGE (Generic Desktop)
   0x09, 0x04,                       // USAGE (Joystick) (Maybe change to gamepad? I don't think so but...)
   0xa1, 0x01,                       // COLLECTION (Application)
-    0xa1, 0x00,                       // COLLECTION (Physical)
+    0xa1, 0x00,                     // COLLECTION (Physical)
     
-      0x05, 0x09,                       // USAGE_PAGE (Button)
-      0x19, 0x01,                       // USAGE_MINIMUM (Button 1)
-      0x29, 0x08,                       // USAGE_MAXIMUM (Button 8)
-      0x15, 0x00,                       // LOGICAL_MINIMUM (0)
-      0x25, 0x01,                       // LOGICAL_MAXIMUM (1)
-      0x95, 0x08,                       // REPORT_COUNT (8)
-      0x75, 0x01,                       // REPORT_SIZE (1)
-      0x81, 0x02,                       // INPUT (Data,Var,Abs)
+      0x05, 0x09,                   // USAGE_PAGE (Button)
+      0x19, 0x01,                   // USAGE_MINIMUM (Button 1)
+      0x29, 0x18,                   // USAGE_MAXIMUM (Button 24)
+      0x15, 0x00,                   // LOGICAL_MINIMUM (0)
+      0x25, 0x01,                   // LOGICAL_MAXIMUM (1)
+      0x95, 0x18,                   // REPORT_COUNT (24)
+      0x75, 0x01,                   // REPORT_SIZE (1)
+      0x81, 0x02,                   // INPUT (Data,Var,Abs)
     
-      0x05, 0x01,                       // USAGE_PAGE (Generic Desktop)
-      0x09, 0x01,                       // USAGE (pointer)
-      0xa1, 0x00,                       // COLLECTION (Physical) 
-        0x09, 0x30,                       // USAGE (X)
-        0x09, 0x31,                       // USAGE (Y)
-        0x15, 0xff,                       // LOGICAL_MINIMUM (-1)
-        0x25, 0x01,                       // LOGICAL_MAXIMUM (1)
-        0x95, 0x02,                       // REPORT_COUNT (2)
-        0x75, 0x08,                       // REPORT_SIZE (8)
-        0x81, 0x02,                       // INPUT (Data,Var,Abs)
-      0xc0,                             // END_COLLECTION
+      0x15, 0x00,                   // Logical Minimum (0)
+      0x25, 0x07,                   // Logical Maximum (7)
+      0x35, 0x00,                   // Physical Minimum (0)
+      0x46, 0x3B, 0x01,             // Physical Maximum (315)
+      0x75, 0x08,                   // Report Size (8)
+      0x95, 0x01,                   // Report Count (1)
+      0x65, 0x14,                   // Unit (20)
+      0x05, 0x01,                   // Usage Page (Generic Desktop)
+      0x09, 0x39,                   // Usage (Hat switch)
+      0x81, 0x42,                   // Input (variable,absolute,null_state)
 
-    0xc0,                             // END_COLLECTION
+    0xc0,                           // END_COLLECTION
   0xc0,                             // END_COLLECTION 
 };
 
@@ -133,8 +130,7 @@ bool Gamepad_::setup(USBSetup& setup)
 
 void Gamepad_::reset()
 {
-  _GamepadReport.X = 0;
-  _GamepadReport.Y = 0;
+  _GamepadReport.hat = 15;
   _GamepadReport.buttons = 0;
   this->send();
 }
@@ -146,5 +142,10 @@ void Gamepad_::send()
 
 uint8_t Gamepad_::getShortName(char *name)
 {
+  if(!next) 
+  {
+    strcpy(name, gp_serial);
+    return strlen(name);
+  }
   return 0;
 }

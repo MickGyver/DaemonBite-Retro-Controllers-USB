@@ -28,25 +28,20 @@
 
 #include "HID.h"
 
+extern const char* gp_serial;
+
 // The numbers after colon are bit fields, meaning how many bits the field uses.
 // Remove those if there are problems
 typedef struct {
-  union 
+
+  union
   {
     struct {
-      bool  b0: 1 ;
-      bool  b1: 1 ;
-      bool  b2: 1 ;
-      bool  b3: 1 ;
-      bool  b4: 1 ;
-      bool  b5: 1 ;
-      bool  b6: 1 ;
-      bool  b7: 1 ; 
+      uint32_t buttons : 24;
+      uint8_t hat;
     };
-    uint8_t buttons;
+    uint32_t data;
   };
-  int8_t X  ;
-  int8_t Y  ;  
   
 } GamepadReport;
 
@@ -59,8 +54,8 @@ class Gamepad_ : public PluggableUSBModule
   protected:
     int getInterface(uint8_t* interfaceCount);
     int getDescriptor(USBSetup& setup);
-    uint8_t getShortName(char *name);
     bool setup(USBSetup& setup);
+    uint8_t getShortName(char *name);
     
     uint8_t epType[1];
     uint8_t protocol;
