@@ -59,7 +59,8 @@ typedef struct {
   
   int8_t  X;
   int8_t  Y;
-  int8_t  dial;
+  int8_t  spinner;
+  int8_t  paddle;
   uint8_t hat;
 
 } GamepadReport;

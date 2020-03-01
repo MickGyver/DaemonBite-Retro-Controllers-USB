@@ -161,7 +161,7 @@ void setup()
   
   sp_step = EEPROM.read(2);
   if(sp_step > 8) sp_step = 8;
-  if(sp_step < 1) sp_step = 4;
+  if(sp_step < 1) sp_step = 1;
 
   sp_div = EEPROM.read(3) ? 1 : 2;
   sp_max = SP_MAX/sp_div;
@@ -278,27 +278,19 @@ void loop()
 
     if(mode == 2) ff = 1;
 
-    if(!(Gamepad._GamepadReport.buttons&3))
-    {
-      int16_t diff = cleancnt - prevcnt;
-      if(diff >= sp_step)
-      {
-        newbtn |= 2;
-        prevcnt += sp_step;
-      }
-      else if(diff <= -sp_step)
-      {
-        newbtn |= 1;
-        prevcnt -= sp_step;
-      }
-    }
+    int16_t val = ((int16_t)(cleancnt - prevcnt))/sp_step;
+    if(val>127) val = 127; else if(val<-127) val = -127;
+    prevcnt += val*sp_step;
+    int8_t spinner = val;
+    
+    uint8_t paddle = ((pdlpos*255)/sp_max);
 
-    uint8_t dial = ((pdlpos*255)/sp_max);
-    if(oldbtn != newbtn || Gamepad._GamepadReport.dial != dial)
+    if(oldbtn != newbtn || Gamepad._GamepadReport.paddle != paddle || Gamepad._GamepadReport.spinner != spinner)
     {
       oldbtn = newbtn;
       Gamepad._GamepadReport.buttons = (newbtn & 0xF) | ((newbtn>>4) & ~0xF);
-      Gamepad._GamepadReport.dial = dial;
+      Gamepad._GamepadReport.paddle = paddle;
+      Gamepad._GamepadReport.spinner = spinner;
       Gamepad._GamepadReport.hat = dpad2hat(newbtn>>4);
       Gamepad.send();
     }

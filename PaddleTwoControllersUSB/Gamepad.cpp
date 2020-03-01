@@ -34,7 +34,7 @@ static const uint8_t _hidReportDescriptor[] PROGMEM = {
     
       0x05, 0x09,                   // USAGE_PAGE (Button)
       0x19, 0x01,                   // USAGE_MINIMUM (Button 1)
-      0x29, 0x03,                   // USAGE_MAXIMUM (Button 3)
+      0x29, 0x01,                   // USAGE_MAXIMUM (Button 1)
       0x15, 0x00,                   // LOGICAL_MINIMUM (0)
       0x25, 0x01,                   // LOGICAL_MAXIMUM (1)
       0x95, 0x08,                   // REPORT_COUNT (8)
@@ -42,15 +42,20 @@ static const uint8_t _hidReportDescriptor[] PROGMEM = {
       0x81, 0x02,                   // INPUT (Data,Var,Abs)
     
       0x05, 0x01,                   // USAGE_PAGE (Generic Desktop)
-      0x09, 0x01,                   // USAGE (pointer)
-      0xa1, 0x00,                   // COLLECTION (Physical) 
-        0x09, 0x37,                 // USAGE (Dial)
-        0x15, 0x00,                 // LOGICAL_MINIMUM (0)
-        0x26, 0xFF, 0x00,           // LOGICAL_MAXIMUM (255)
-        0x95, 0x01,                 // REPORT_COUNT (1)
-        0x75, 0x08,                 // REPORT_SIZE (8)
-        0x81, 0x02,                 // INPUT (Data,Var,Abs)
-      0xc0,                         // END_COLLECTION
+
+      0x09, 0x37,                   // USAGE (Dial)
+      0x15, 0x80,                   // LOGICAL_MINIMUM (-128)
+      0x25, 0x7F,                   // LOGICAL_MAXIMUM (127)
+      0x95, 0x01,                   // REPORT_COUNT (1)
+      0x75, 0x08,                   // REPORT_SIZE (8)
+      0x81, 0x06,                   // INPUT (Data,Var,Rel)
+
+      0x09, 0x38,                   // USAGE (Wheel)
+      0x15, 0x00,                   // LOGICAL_MINIMUM (0)
+      0x26, 0xFF, 0x00,             // LOGICAL_MAXIMUM (255)
+      0x95, 0x01,                   // REPORT_COUNT (1)
+      0x75, 0x08,                   // REPORT_SIZE (8)
+      0x81, 0x02,                   // INPUT (Data,Var,Abs)
 
     0xc0,                           // END_COLLECTION
   0xc0,                             // END_COLLECTION 
@@ -130,7 +135,8 @@ bool Gamepad_::setup(USBSetup& setup)
 
 void Gamepad_::reset()
 {
-  _GamepadReport.dial = 0;
+  _GamepadReport.paddle = 0;
+  _GamepadReport.spinner = 0;
   _GamepadReport.buttons = 0;
   this->send();
 }

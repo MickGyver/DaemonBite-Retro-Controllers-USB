@@ -196,49 +196,40 @@ void loop()
   {
     analog[idx].update();
     rep.buttons = 0;
-    rep.dial = 0;
+    rep.paddle = 0;
+    rep.spinner = 0;
 
     // paddle button
     if(!digitalRead(pbtnpin[idx]))
     {
       pdlena[idx] = 1;
-      rep.b2 = 1;
+      rep.b0 = 1;
     }
     
     // spinner button
     if(!digitalRead(dbtnpin[idx]))
     {
       pdlena[idx] = 0;
-      rep.b2 = 1;
+      rep.b0 = 1;
     }
-    
+
     if(pdlena[idx])
     {
-      rep.dial = (analog[idx].getValue()>>2);
+      rep.paddle = (analog[idx].getValue()>>2);
     }
     else
     {
       #ifdef PADDLE_EMU
-        rep.dial = ((sp_clamp[idx]*255)/sp_max);
+        rep.paddle = ((sp_clamp[idx]*255)/sp_max);
       #endif
     }
 
-    if(!Gamepad[idx]._GamepadReport.b0 && !Gamepad[idx]._GamepadReport.b1)
-    {
-      static uint16_t prev[2] = {0,0};
-      int16_t diff = drvpos[idx] - prev[idx];
-
-      if(diff >= sp_step)
-      {
-        rep.b1 = 1;
-        prev[idx] += sp_step;
-      }
-      else if(diff <= -sp_step)
-      {
-        rep.b0 = 1;
-        prev[idx] -= sp_step;
-      }
-    }
+    // spinner rotation
+    static uint16_t prev[2] = {0,0};
+    int16_t val = ((int16_t)(drvpos[idx] - prev[idx]))/sp_step;
+    if(val>127) val = 127; else if(val<-127) val = -127;
+    rep.spinner = val;
+    prev[idx] += val*sp_step;
 
     // Only report controller state if it has changed
     if (memcmp(&Gamepad[idx]._GamepadReport, &rep, sizeof(GamepadReport)))
