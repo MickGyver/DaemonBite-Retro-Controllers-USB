@@ -47,8 +47,8 @@
 // (Second controller port for future reference)
 //  1     15  PB1
 //  2     14  PB3
-//  3     16  PB2
-//  4     10  PB6
+//  3      2  PD1
+//  4      5  PC6
 //  5     A2  PF5
 //  6      7  PE6 (Important: Connect this pin via a 220Ω resistor!)
 //  7     VCC

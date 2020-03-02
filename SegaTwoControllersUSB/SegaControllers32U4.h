@@ -56,7 +56,7 @@ enum
   DB9_PIN3_BIT2 = 1,
   DB9_PIN4_BIT2 = 0,
   DB9_PIN6_BIT2 = 4,
-  DB9_PIN9_BIT2 = 7
+  DB9_PIN9_BIT2 = 6
 };
 
 const byte SC_INPUT_PINS = 6;
@@ -83,6 +83,7 @@ class SegaControllers32U4 {
     byte _inputReg1;
     byte _inputReg2;
     byte _inputReg3;
+    byte _inputReg4;
 };
 
 #endif

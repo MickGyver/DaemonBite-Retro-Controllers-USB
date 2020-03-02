@@ -38,7 +38,7 @@
 //  3     A2  PF5
 //  4     A3  PF4
 //  6     14  PB3
-//  7     16  PB2 (6  PD7)
+//  7      6  PD7
 //  9     15  PB1
 
 //  1     TXO PD3
@@ -47,7 +47,7 @@
 //  4      3  PD0
 //  6      4  PD4
 //  7      5  PC6
-//  9      6  PD7
+//  9      7  PE6
 
 SegaControllers32U4 controllers;
 
