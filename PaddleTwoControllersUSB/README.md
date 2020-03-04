@@ -38,10 +38,17 @@ Connector 2:
 | 7 | VCC | VCC | VCC         |
 | 8 | GND | GND | GND         |
 
-### Notes
-1. You need to set correct SPINNER_PPR value in source according to used spinner.
-2. Spinner emulates the paddle as well, So bassically the spinner is the only you need for both spinner and paddle control. If you don't need paddle emulation then comment out (or remove) the line ```#define PADDLE_EMU```
-3. Adapter switches to paddle by pressing the button on paddle. It switches to spinner if spinner is moved or spinner button has been pressed.
+### Source parameters
+Firmware has several definitions to tweak for best experience:
+
+1. BEETLE: support for miniature board version with USB plug integrated. Enable it if you use Beetle board - it uses other pins.
+2. SPINNER_PPR: set the correct PPR value according to your spinner for correct work.
+3. PADDLE_EMU: enable paddle emulation by spinner if defined. So bassically the spinner is the only you need for both spinner and paddle control.
+4. PADDLE_SUPPORT: support for physical paddles. Even if this option is disabled, the paddle emulation mode by spinner will continue to work.
+5. DEV_NUM: set it to 2 or 1. If you integrate the board into some controller's case with only single spinner/paddle, then 1 would be better.
+
+### Dependencies
+If PADDLE_SUPPORT is defined, then additional **ResponsiveAnalogRead** library is required. You can install it in library manager function of Arduino IDE.
 
 ## License
 This project is licensed under the GNU General Public License v3.0.

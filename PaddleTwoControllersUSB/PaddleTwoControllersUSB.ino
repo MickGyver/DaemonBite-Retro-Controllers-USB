@@ -77,6 +77,10 @@
 // Comment it to dosable paddle emulation by spinner
 #define PADDLE_EMU
 
+// Comment it to disable the paddle (potentiomenter) support.
+// Even if disabled, paddle can be emulated by spinner.
+#define PADDLE_SUPPORT
+
 // Optional parameter. Leave it commented out.
 //#define SPINNER_SENSITIVITY 1
 
@@ -113,11 +117,14 @@
 // Additionally serial number is used to differentiate arduino projects to have different button maps!
 const char *gp_serial = "MiSTer-S1 Spinner";
 
-#include <ResponsiveAnalogRead.h> 
 #include "Gamepad.h"
 
 Gamepad_ Gamepad[DEV_NUM];
-ResponsiveAnalogRead analog[2] = {ResponsiveAnalogRead(pdlpin[0], true),ResponsiveAnalogRead(pdlpin[1], true)};
+
+#ifdef PADDLE_SUPPORT
+  #include <ResponsiveAnalogRead.h> 
+  ResponsiveAnalogRead analog[2] = {ResponsiveAnalogRead(pdlpin[0], true),ResponsiveAnalogRead(pdlpin[1], true)};
+#endif
 
 int8_t pdlena[2]  = {0,0};
 uint16_t drvpos[2];
@@ -180,8 +187,11 @@ void setup()
     pdlena[idx] = 0;
     pinMode(pbtnpin[idx],   INPUT_PULLUP);
     pinMode(pdlpin[idx],    INPUT);
+
+#ifdef PADDLE_SUPPORT
     analog[idx].setSnapMultiplier(snap);
     analog[idx].setActivityThreshold(thresh);
+#endif
   }
 }
 
@@ -194,7 +204,10 @@ void loop()
 
   for(int idx=0; idx<DEV_NUM; idx++)
   {
+#ifdef PADDLE_SUPPORT
     analog[idx].update();
+#endif
+
     rep.buttons = 0;
     rep.paddle = 0;
     rep.spinner = 0;
@@ -215,7 +228,9 @@ void loop()
 
     if(pdlena[idx])
     {
-      rep.paddle = (analog[idx].getValue()>>2);
+      #ifdef PADDLE_SUPPORT
+        rep.paddle = (analog[idx].getValue()>>2);
+      #endif
     }
     else
     {
