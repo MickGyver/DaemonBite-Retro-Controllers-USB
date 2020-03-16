@@ -122,7 +122,7 @@ const char *gp_serial = "MiSTer-S1 Spinner";
 Gamepad_ Gamepad[DEV_NUM];
 
 #ifdef PADDLE_SUPPORT
-  #include <ResponsiveAnalogRead.h> 
+  #include "ResponsiveAnalogRead.h"
   ResponsiveAnalogRead analog[2] = {ResponsiveAnalogRead(pdlpin[0], true),ResponsiveAnalogRead(pdlpin[1], true)};
 #endif
 
