@@ -36,7 +36,7 @@
 //  9 8 7 6
 //
 // Joystick Port 1
-// DB9    Arduino Pro Micro     Paddle x2   Driving x1
+// DB9    Arduino Pro Micro     Paddle x2   Driving #1
 // ---------------------------------------------------
 //  1     TXO(1)  PD3                       EncA
 //  2     RXI(0)  PD2                       EncB
@@ -49,7 +49,7 @@
 //  9     A1      PF6           paddle 1
 //
 // Joystick Port 2
-// DB9    Arduino Pro Micro                 Driving x1
+// DB9    Arduino Pro Micro                 Driving #2
 // ---------------------------------------------------
 //  1     2    PD1                          EncA
 //  2     7    PE6                          EncB
@@ -212,12 +212,14 @@ void loop()
     rep.paddle = 0;
     rep.spinner = 0;
 
+#ifdef PADDLE_SUPPORT
     // paddle button
     if(!digitalRead(pbtnpin[idx]))
     {
       pdlena[idx] = 1;
       rep.b0 = 1;
     }
+#endif
     
     // spinner button
     if(!digitalRead(dbtnpin[idx]))
@@ -226,17 +228,17 @@ void loop()
       rep.b0 = 1;
     }
 
+#ifdef PADDLE_SUPPORT
     if(pdlena[idx])
     {
-      #ifdef PADDLE_SUPPORT
         rep.paddle = (analog[idx].getValue()>>2);
-      #endif
     }
     else
+#endif
     {
-      #ifdef PADDLE_EMU
+#ifdef PADDLE_EMU
         rep.paddle = ((sp_clamp[idx]*255)/sp_max);
-      #endif
+#endif
     }
 
     // spinner rotation
