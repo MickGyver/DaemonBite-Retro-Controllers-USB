@@ -29,6 +29,8 @@
 #include <Arduino.h>
 #include "HID.h"
 
+extern const char* gp_serial;
+
 // The numbers after colon are bit fields, meaning how many bits the field uses.
 // Remove those if there are problems
 typedef struct {

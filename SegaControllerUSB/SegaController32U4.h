@@ -28,6 +28,18 @@
 #ifndef SegaController32U4_h
 #define SegaController32U4_h
 
+//#define USE_OLD_WIRING // Uncomment this line to use the old wiring with DB9 pin 6 to Arduino pin 7
+
+#ifdef USE_OLD_WIRING
+  #define DDR_SELECT   DDRD
+  #define PORT_SELECT  PORTD
+  #define MASK_SELECT  B10000000
+#else
+  #define DDR_SELECT   DDRE
+  #define PORT_SELECT  PORTE
+  #define MASK_SELECT  B01000000
+#endif
+
 enum
 {
   SC_CTL_ON    = 1,   // The controller is connected (not used)
@@ -43,8 +55,10 @@ enum
   SC_BTN_Z     = 1024,
   SC_BTN_START = 2048,
   SC_BTN_MODE  = 4096,
-  SC_BTN_1     = 64,   // Master System compatibility
-  SC_BTN_2     = 128,  // Master System compatibility
+  SC_BIT_UP    = 1,
+  SC_BIT_DOWN  = 2,
+  SC_BIT_LEFT  = 3,
+  SC_BIT_RIGHT = 4,
   DB9_PIN1_BIT = 7,
   DB9_PIN2_BIT = 6,
   DB9_PIN3_BIT = 5,
@@ -52,8 +66,6 @@ enum
   DB9_PIN6_BIT = 3,
   DB9_PIN9_BIT = 1
 };
-
-const byte SC_INPUT_PINS = 6;
 
 const byte SC_CYCLE_DELAY = 10; // Delay (µs) between setting the select pin and reading the button pins
 

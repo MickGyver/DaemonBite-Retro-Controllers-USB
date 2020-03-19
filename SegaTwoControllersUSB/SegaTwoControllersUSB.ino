@@ -24,6 +24,10 @@
 #include "SegaControllers32U4.h"
 #include "Gamepad.h"
 
+// ATT: 20 chars max (including NULL at the end) according to Arduino source code.
+// Additionally serial number is used to differentiate arduino projects to have different button maps!
+const char *gp_serial = "Sega/C= to USB";
+
 // Controller DB9 pins (looking face-on to the end of the plug):
 //
 // 5 4 3 2 1
@@ -38,7 +42,7 @@
 //  3     A2  PF5
 //  4     A3  PF4
 //  6     14  PB3
-//  7      6  PD7
+//  7      7  PE6
 //  9     15  PB1
 
 //  1     TXO PD3
@@ -47,7 +51,7 @@
 //  4      3  PD0
 //  6      4  PD4
 //  7      5  PC6
-//  9      7  PE6
+//  9      6  PD7
 
 SegaControllers32U4 controllers;
 
@@ -61,16 +65,16 @@ word lastState[2] = {1,1};
 
 void setup()
 {
-  Gamepad[0].reset();
-  Gamepad[1].reset();
+  for(byte gp=0; gp<=1; gp++)
+    Gamepad[gp].reset();
 }
 
 void loop()
 {
-  currentState[0] = controllers.getStateMD1();
-  sendState(0);
-  currentState[1] = controllers.getStateMD2();
-  sendState(1);
+  for(byte gp=0; gp<=1; gp++) {
+    currentState[gp] = controllers.getStateMD(gp);
+    sendState(gp);
+  }
 }
 
 void sendState(byte gp)
@@ -79,8 +83,8 @@ void sendState(byte gp)
   if (currentState[gp] != lastState[gp])
   {
     Gamepad[gp]._GamepadReport.buttons = currentState[gp] >> 5;
-    Gamepad[gp]._GamepadReport.Y = ((currentState[gp] & B00000100) >> 2) - ((currentState[gp] & B00000010) >> 1);
-    Gamepad[gp]._GamepadReport.X = ((currentState[gp] & B00010000) >> 4) - ((currentState[gp] & B00001000) >> 3);
+    Gamepad[gp]._GamepadReport.Y = ((currentState[gp] & SC_BTN_DOWN) >> SC_BIT_DOWN) - ((currentState[gp] & SC_BTN_UP) >> SC_BIT_UP);
+    Gamepad[gp]._GamepadReport.X = ((currentState[gp] & SC_BTN_RIGHT) >> SC_BIT_RIGHT) - ((currentState[gp] & SC_BTN_LEFT) >> SC_BIT_LEFT);
     Gamepad[gp].send();
     lastState[gp] = currentState[gp];
   }

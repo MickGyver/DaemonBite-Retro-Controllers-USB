@@ -30,21 +30,29 @@
 
 enum
 {
-  SC_CTL_ON    = 1,   // The controller is connected (not used)
-  SC_BTN_UP    = 2,
-  SC_BTN_DOWN  = 4,
-  SC_BTN_LEFT  = 8,
-  SC_BTN_RIGHT = 16,
-  SC_BTN_A     = 32,
-  SC_BTN_B     = 64,
-  SC_BTN_C     = 128,
-  SC_BTN_X     = 256,
-  SC_BTN_Y     = 512,
-  SC_BTN_Z     = 1024,
-  SC_BTN_START = 2048,
-  SC_BTN_MODE  = 4096,
-  SC_BTN_1     = 64,   // Master System compatibility
-  SC_BTN_2     = 128,  // Master System compatibility
+  SC_CTL_ON     = 1,   // The controller is connected (not used)
+  SC_BTN_UP     = 2,
+  SC_BTN_DOWN   = 4,
+  SC_BTN_LEFT   = 8,
+  SC_BTN_RIGHT  = 16,
+  SC_BTN_A      = 32,
+  SC_BTN_B      = 64,
+  SC_BTN_C      = 128,
+  SC_BTN_X      = 256,
+  SC_BTN_Y      = 512,
+  SC_BTN_Z      = 1024,
+  SC_BTN_START  = 2048,
+  SC_BTN_MODE   = 4096,
+  SC_BIT_UP     = 1,
+  SC_BIT_DOWN   = 2,
+  SC_BIT_LEFT   = 3,
+  SC_BIT_RIGHT  = 4,
+  SC_PIN1_BIT   = 0,
+  SC_PIN2_BIT   = 1,
+  SC_PIN3_BIT   = 2,
+  SC_PIN4_BIT   = 3,
+  SC_PIN6_BIT   = 4,
+  SC_PIN9_BIT   = 5,
   DB9_PIN1_BIT1 = 7,
   DB9_PIN2_BIT1 = 6,
   DB9_PIN3_BIT1 = 5,
@@ -59,20 +67,20 @@ enum
   DB9_PIN9_BIT2 = 6
 };
 
-const byte SC_INPUT_PINS = 6;
-
 const byte SC_CYCLE_DELAY = 10; // Delay (µs) between setting the select pin and reading the button pins
 
 class SegaControllers32U4 {
   public:
     SegaControllers32U4(void);
 
-    word getStateMD1();
-    word getStateMD2();
+    word getStateMD(byte);
 
   private:
     word _currentState[2];
 
+    byte volatile * const _ddrSelect[2] =  { &DDRE, &DDRC }; 
+    byte volatile * const _portSelect[2] = { &PORTE, &PORTC }; 
+    const byte _maskSelect[2] = {B01000000, B01000000}; 
     boolean _pinSelect[2];
 
     byte _ignoreCycles[2];
@@ -80,10 +88,9 @@ class SegaControllers32U4 {
     boolean _connected[2];
     boolean _sixButtonMode[2];
 
-    byte _inputReg1;
-    byte _inputReg2;
-    byte _inputReg3;
-    byte _inputReg4;
+    byte volatile * const _pinInputs[2][7] = { {&PINF,&PINF,&PINF,&PINF,&PINB,&PINB}, {&PIND,&PIND,&PIND,&PIND,&PIND,&PIND} }; 
+    byte _bitInputs[2][7] = { {7,6,5,4,3,1}, {3,2,1,0,4,7} };
+    byte _inputReg[2];
 };
 
 #endif

@@ -146,5 +146,10 @@ void Gamepad_::send()
 
 uint8_t Gamepad_::getShortName(char *name)
 {
+  if(!next) 
+  {
+    strcpy(name, gp_serial);
+    return strlen(name);
+  }
   return 0;
 }

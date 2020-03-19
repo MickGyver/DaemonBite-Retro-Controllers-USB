@@ -33,9 +33,9 @@
 
 SegaController32U4::SegaController32U4(void)
 {
-    // Setup select pin as output high (6, PD7)
-    DDRD  |= B10000000; // output
-    PORTD |= B10000000; // high
+    // Setup select pin as output high (7, PE6)
+    DDR_SELECT  |= MASK_SELECT; // output
+    PORT_SELECT |= MASK_SELECT; // high
 
     // Setup input pins (A0,A1,A2,A3,14,15 or PF7,PF6,PF5,PF4,PB3,PB1)
     DDRF  &= ~B11110000; // input
@@ -67,7 +67,7 @@ word SegaController32U4::getStateMD()
 
   // Set the select pin low/high
   _pinSelect = !_pinSelect;
-  (!_pinSelect) ? PORTD &= ~B10000000 : PORTD |= B10000000; // Set LOW on even cycle, HIGH on uneven cycle
+  (!_pinSelect) ? PORT_SELECT &= ~MASK_SELECT : PORT_SELECT |= MASK_SELECT; // Set LOW on even cycle, HIGH on uneven cycle
 
   // Short delay to stabilise outputs in controller
   delayMicroseconds(SC_CYCLE_DELAY);

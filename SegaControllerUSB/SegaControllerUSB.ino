@@ -24,6 +24,10 @@
 #include "SegaController32U4.h"
 #include "Gamepad.h"
 
+// ATT: 20 chars max (including NULL at the end) according to Arduino source code.
+// Additionally serial number is used to differentiate arduino projects to have different button maps!
+const char *gp_serial = "Sega/C= to USB";
+
 // Controller DB9 pins (looking face-on to the end of the plug):
 //
 // 5 4 3 2 1
@@ -38,7 +42,7 @@
 //  3     A2  PF5
 //  4     A3  PF4
 //  6     14  PB3
-//  7      6  PD7
+//  7      7  PE6 (Used to be 6 PD7)
 //  9     15  PB1
 
 SegaController32U4 controller;
@@ -67,8 +71,8 @@ void sendState()
   if (currentState != lastState)
   {
     Gamepad._GamepadReport.buttons = currentState >> 5;
-    Gamepad._GamepadReport.Y = ((currentState & B00000100) >> 2) - ((currentState & B00000010) >> 1);
-    Gamepad._GamepadReport.X = ((currentState & B00010000) >> 4) - ((currentState & B00001000) >> 3);
+    Gamepad._GamepadReport.Y = ((currentState & SC_BTN_DOWN) >> SC_BIT_DOWN) - ((currentState & SC_BTN_UP) >> SC_BIT_UP);
+    Gamepad._GamepadReport.X = ((currentState & SC_BTN_RIGHT) >> SC_BIT_RIGHT) - ((currentState & SC_BTN_LEFT) >> SC_BIT_LEFT);
     Gamepad.send();
     lastState = currentState;
   }
