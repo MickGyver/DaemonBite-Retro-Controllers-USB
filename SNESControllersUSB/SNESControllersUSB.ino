@@ -30,9 +30,6 @@ const char *gp_serial = "NES/SNES to USB";
 #define GAMEPAD_COUNT 2     // NOTE: No more than TWO gamepads are possible at the moment due to a USB HID issue.
 #define GAMEPAD_COUNT_MAX 4 // NOTE: For some reason, can't have more than two gamepads without serial breaking. Can someone figure out why?
                             //       (It has something to do with how Arduino handles HID devices)
-#define SNES 0
-#define NES  1
-#define GPTYPE NES           // NOTE: Set gamepad type here (NES or SNES)! :)
 #define BUTTON_READ_DELAY 300 // Button read delay in µs
 
 #define UP    0x01
@@ -52,8 +49,8 @@ const char *gp_serial = "NES/SNES to USB";
 // CUP  (CLOCK)              3   (PD0, All gamepads)
 // D1   (GP1: DATA)          A0  (PF7, Gamepad 1) 
 // D1   (GP2: DATA)          A1  (PF6, Gamepad 2)
-// D1   (GP3: DATA)          A2  (PF5, Gamepad 3)
-// D1   (GP4: DATA)          A3  (PF4, Gamepad 4)
+// D1   (GP3: DATA)          A2  (PF5, Gamepad 3, not currently used)
+// D1   (GP4: DATA)          A3  (PF4, Gamepad 4, not currently used)
 
 // Set up USB HID gamepads
 Gamepad_ Gamepad[GAMEPAD_COUNT];
@@ -62,15 +59,12 @@ Gamepad_ Gamepad[GAMEPAD_COUNT];
 uint32_t buttons[GAMEPAD_COUNT_MAX] = {0,0,0,0};
 uint32_t buttonsPrev[GAMEPAD_COUNT_MAX] = {0,0,0,0};
 uint8_t gpBit[GAMEPAD_COUNT_MAX] = {B10000000,B01000000,B00100000,B00010000};
-uint32_t btnBitsSnes[32] = {0x10,0x40,0x400,0x800,UP,DOWN,LEFT,RIGHT,0x20,0x80,0x100,0x200,          // Standard SNES controller
-                            0x10000000,0x20000000,0x40000000,0x80000000,0x1000,0x2000,0x4000,0x8000, // NTT Data Keypad (NDK10)
-                            0x10000,0x20000,0x40000,0x80000,0x100000,0x200000,0x400000,0x800000,
-                            0x1000000,0x2000000,0x4000000,0x8000000};
-uint32_t btnBitsNes[8] =  {0x20,0x10,0x400,0x800,UP,DOWN,LEFT,RIGHT};
-uint32_t *btnBits;
+uint32_t btnBits[32] = {0x10,0x40,0x400,0x800,UP,DOWN,LEFT,RIGHT,0x20,0x80,0x100,0x200,          // Standard SNES controller
+                        0x10000000,0x20000000,0x40000000,0x80000000,0x1000,0x2000,0x4000,0x8000, // NTT Data Keypad (NDK10)
+                        0x10000,0x20000,0x40000,0x80000,0x100000,0x200000,0x400000,0x800000,
+                        0x1000000,0x2000000,0x4000000,0x8000000};
 uint8_t gp = 0;
-uint8_t gpType = GPTYPE;
-uint8_t buttonCount = 0;
+uint8_t buttonCount = 32;
 
 // Timing
 long microsNow = 0;
@@ -85,15 +79,6 @@ void setup()
   // Setup data pins (A0-A3 or PF7-PF4)
   DDRF  &= ~B11110000; // inputs
   PORTF |=  B11110000; // enable internal pull-ups
-
-  if(gpType == SNES) {
-    buttonCount = 32;
-    btnBits = btnBitsSnes;
-  }
-  else {
-    buttonCount = 8;
-    btnBits = btnBitsNes;
-  }
 }
 
 void loop()
@@ -110,22 +95,22 @@ void loop()
     for(uint8_t btn=0; btn<buttonCount; btn++)
     {
       for(gp=0; gp<GAMEPAD_COUNT; gp++) 
-      {
         (PINF & gpBit[gp]) ? buttons[gp] &= ~btnBits[btn] : buttons[gp] |= btnBits[btn];
-      }
       sendClock();
     }
 
-    // Check for NTT Data Keypad
-    if(gpType == SNES)
+    // Check gamepad type
+    for(gp=0; gp<GAMEPAD_COUNT; gp++) 
     {
-      for(gp=0; gp<GAMEPAD_COUNT; gp++) 
-      {
-        if(buttons[gp] & NTT_CONTROL_BIT)
-          buttons[gp] &= 0x3FFFFFF;
-        else
-          buttons[gp] &= 0xFFF;
+      if((buttons[gp] & 0xF3A0) == 0xF3A0) { // NES
+        bitWrite(buttons[gp], 5, bitRead(buttons[gp], 4));
+        bitWrite(buttons[gp], 4, bitRead(buttons[gp], 6));
+        buttons[gp] &= 0xC3F;
       }
+      else if(buttons[gp] & NTT_CONTROL_BIT) // SNES NTT Data Keypad
+        buttons[gp] &= 0x3FFFFFF;
+      else                                   // SNES Gamepad
+        buttons[gp] &= 0xFFF; 
     }
 
     microsButtons = microsNow+100;
