@@ -24,8 +24,6 @@
  *  
  */
 
-#pragma once
-
 #include "Gamepad.h"
 
 static const uint8_t _hidReportDescriptor[] PROGMEM = {
@@ -146,5 +144,10 @@ void Gamepad_::send()
 
 uint8_t Gamepad_::getShortName(char *name)
 {
+  if(!next) 
+  {
+    strcpy(name, gp_serial);
+    return strlen(name);
+  }
   return 0;
 }

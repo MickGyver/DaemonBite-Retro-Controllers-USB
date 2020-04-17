@@ -29,11 +29,7 @@
 #include <Arduino.h>
 #include "HID.h"
 
-// NOTE: To make this work on the MiSTer (or possibly other Linux distros), 
-// you need to edit USBDesc.h like follows. Change:
-// #define ISERIAL         3
-// to
-// #define ISERIAL         0
+extern const char* gp_serial;
 
 // The numbers after colon are bit fields, meaning how many bits the field uses.
 // Remove those if there are problems
