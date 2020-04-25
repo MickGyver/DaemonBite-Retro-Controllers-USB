@@ -24,6 +24,10 @@
 #include "SegaControllers32U4.h"
 #include "Gamepad.h"
 
+// ATT: 20 chars max (including NULL at the end) according to Arduino source code.
+// Additionally serial number is used to differentiate arduino projects to have different button maps!
+const char *gp_serial = "Sega/C= to USB";
+
 // Controller DB9 pins (looking face-on to the end of the plug):
 //
 // 5 4 3 2 1
