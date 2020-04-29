@@ -13,7 +13,7 @@ The input lag for these adapters is minimal. Here is the result of the Sega cont
 See the README files in the subfolders for build instructions. All the adapters are build around the Arduino Pro Micro.
 
 ## Building the projects
-You will need the [Arduino IDE](https://www.arduino.cc/en/Main/Software) to build the projects. Download the whole repository via the "Clone or download" button, open the project you want to build in the IDE and select Leonardo in Tools / Board. Connect the Arduino to a USB port and build/upload from Scetch / Upload.
+You will need the [Arduino IDE](https://www.arduino.cc/en/Main/Software) to build the projects. Download the whole repository via the "Clone or download" button, open the project you want to build in the IDE and select "Arduino Leonardo" in Tools / Board. Connect the Arduino to a USB port and build/upload from Scetch / Upload.
 
 ## License
 This project is licensed under the GNU General Public License v3.0.
