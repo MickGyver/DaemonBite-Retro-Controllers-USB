@@ -23,7 +23,7 @@
 
 #include "Gamepad.h"
 
-#define BUTTON_READ_DELAY 300 // Button read delay in µs
+#define BUTTON_READ_DELAY 100 // Button read delay in µs
 
 // Controller DB9 pins (looking face-on to the end of the plug):
 //
@@ -67,8 +67,7 @@ uint8_t buttons = 0;
 uint8_t buttonsPrev = 0;
 
 // Timing
-long microsNow = 0;
-long microsButtons = 0;
+unsigned long microsButtons = 0;
 
 // CD32 controller detection
 uint8_t detection = 0;
@@ -88,14 +87,11 @@ void setup()
 
 void loop()
 {
-  // Get current time
-  microsNow = micros();
-
   // Read X and Y axes
   axes = ~(PIND & B00011101);
 
   // See if enough time has passed since last button read
-  if(microsNow > microsButtons+BUTTON_READ_DELAY)
+  if((micros() - microsButtons) > BUTTON_READ_DELAY)
   {
     // Set pin 6 (clock, PD7) and pin 5 (latch, PF7) as output low
     PORTD &= ~B10000000; // low to disable internal pull-up (will become low when set as output)
@@ -137,7 +133,7 @@ void loop()
     if(detection != B0000001)
       buttons = ~( ((PIND & B10000000) >> 7) | ((PINF & B01000000) >> 5) | B11111100 );
     
-    microsButtons = microsNow+400;
+    microsButtons = micros();
   }
 
   // Has any buttons changed state?
