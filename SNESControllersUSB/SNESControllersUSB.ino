@@ -30,7 +30,10 @@ const char *gp_serial = "NES/SNES to USB";
 #define GAMEPAD_COUNT 2     // NOTE: No more than TWO gamepads are possible at the moment due to a USB HID issue.
 #define GAMEPAD_COUNT_MAX 4 // NOTE: For some reason, can't have more than two gamepads without serial breaking. Can someone figure out why?
                             //       (It has something to do with how Arduino handles HID devices)
-#define BUTTON_READ_DELAY 300 // Button read delay in µs
+#define BUTTON_READ_DELAY 30 // Delay between button reads in µs
+#define MICROS_LATCH      12 // 12µs according to specs (8 seems to work fine)
+#define MICROS_CLOCK       6 //  6µs according to specs (4 seems to work fine)
+#define MICROS_PAUSE       6 //  6µs according to specs (4 seems to work fine)
 
 #define UP    0x01
 #define DOWN  0x02
@@ -67,8 +70,7 @@ uint8_t gp = 0;
 uint8_t buttonCount = 32;
 
 // Timing
-long microsNow = 0;
-long microsButtons = 0;
+uint32_t microsButtons = 0;
 
 void setup()
 {
@@ -81,13 +83,10 @@ void setup()
   PORTF |=  B11110000; // enable internal pull-ups
 }
 
-void loop()
+void loop() { while(1)
 {
-  // Get current time
-  microsNow = micros();
-
   // See if enough time has passed since last button read
-  if(microsNow > microsButtons+BUTTON_READ_DELAY)
+  if(micros() - microsButtons > BUTTON_READ_DELAY)
   {    
     // Pulse latch
     sendLatch();
@@ -113,37 +112,37 @@ void loop()
         buttons[gp] &= 0xFFF; 
     }
 
-    microsButtons = microsNow+100;
-  }
-  
-  for(gp=0; gp<GAMEPAD_COUNT; gp++)
-  {
-    // Has any buttons changed state?
-    if (buttons[gp] != buttonsPrev[gp])
+    for(gp=0; gp<GAMEPAD_COUNT; gp++)
     {
-      Gamepad[gp]._GamepadReport.buttons = (buttons[gp] >> 4); // First 4 bits are the axes
-      Gamepad[gp]._GamepadReport.Y = ((buttons[gp] & DOWN) >> 1) - (buttons[gp] & UP);
-      Gamepad[gp]._GamepadReport.X = ((buttons[gp] & RIGHT) >> 3) - ((buttons[gp] & LEFT) >> 2);
-      buttonsPrev[gp] = buttons[gp];
-      Gamepad[gp].send();
+      // Has any buttons changed state?
+      if (buttons[gp] != buttonsPrev[gp])
+      {
+        Gamepad[gp]._GamepadReport.buttons = (buttons[gp] >> 4); // First 4 bits are the axes
+        Gamepad[gp]._GamepadReport.Y = ((buttons[gp] & DOWN) >> 1) - (buttons[gp] & UP);
+        Gamepad[gp]._GamepadReport.X = ((buttons[gp] & RIGHT) >> 3) - ((buttons[gp] & LEFT) >> 2);
+        buttonsPrev[gp] = buttons[gp];
+        Gamepad[gp].send();
+      }
     }
+
+    microsButtons = micros();
   }
-}
+}}
 
 void sendLatch()
 {
   // Send a latch pulse to (S)NES controller(s)
   PORTD |=  B00000010; // Set HIGH
-  delayMicroseconds(12);
+  delayMicroseconds(MICROS_LATCH);
   PORTD &= ~B00000010; // Set LOW
-  delayMicroseconds(6); 
+  delayMicroseconds(MICROS_PAUSE); 
 }
 
 void sendClock()
 {
   // Send a clock pulse to (S)NES controller(s)
   PORTD |=  B10000001; // Set HIGH
-  delayMicroseconds(6);
+  delayMicroseconds(MICROS_CLOCK);
   PORTD &= ~B10000001; // Set LOW
-  delayMicroseconds(6); 
+  delayMicroseconds(MICROS_PAUSE); 
 }

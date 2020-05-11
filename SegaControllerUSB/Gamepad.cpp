@@ -24,8 +24,6 @@
  *  
  */
 
-#pragma once
-
 #include "Gamepad.h"
 
 static const uint8_t _hidReportDescriptor[] PROGMEM = {
