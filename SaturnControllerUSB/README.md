@@ -12,14 +12,12 @@ The input lag for this adapter is minimal (about 0.75ms average connected to MiS
 
 ## Wiring
 Saturn controller socket (looking face-on at the front of the socket):
-___________________
+
 / 1 2 3 4 5 6 7 8 9 \
-|___________________|
 
 Saturn controller plug (looking face-on at the front of the controller plug):
-___________________
+
 / 9 8 7 6 5 4 3 2 1 \
-|___________________|
 
 | Saturn (P1) | Arduino Pro Micro |
 | ------ | ------ |
