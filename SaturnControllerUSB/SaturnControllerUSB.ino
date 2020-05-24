@@ -23,8 +23,9 @@
 
 #include "Gamepad.h"
 
-#define GAMEPAD_COUNT 1 // Set to 1 or 2 depending if you want to make a 1 or 2 port adapter
+#define GAMEPAD_COUNT 2 // Set to 1 or 2 depending if you want to make a 1 or 2 port adapter
 #define SELECT_PAUSE  3 // How many microseconds to wait after setting select lines? (2µs is enough according to the Saturn developer's manual)
+                        // 20µs is required for Retrobit wired controllers
 //#define RETROBIT      // Uncomment to support the Retro Bit 2.4GHz controller (this will increase lag a lot)
  
 #define UP    0x01
