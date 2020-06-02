@@ -38,112 +38,195 @@ SegaControllers32U4::SegaControllers32U4(void)
   PORTF |=  B11110000; // high to enable internal pull-up
   DDRB  &= ~B00001010; // input
   PORTB |=  B00001010; // high to enable internal pull-up
-  // Setup input pins (TXO,RXI,2,3,4,6 or PD3,PD2,PD1,PD0,PD4,PE6)
+  // Setup input pins (TXO,RXI,2,3,4,6 or PD3,PD2,PD1,PD0,PD4,PD7)
   DDRD  &= ~B10011111; // input
   PORTD |=  B10011111; // high to enable internal pull-up
+
+  DDRC  |= B01000000; // Select pins as output
+  DDRE  |= B01000000; 
+  PORTC |= B01000000; // Select pins high
+  PORTE |= B01000000;
   
+  _pinSelect = true;
   for(byte i=0; i<=1; i++)
   {
-    *_ddrSelect[i] |= _maskSelect[i];  // Select pins as output
-    *_portSelect[i] |= _maskSelect[i]; // Select pins high
-    _inputReg[i] = 0;
-    _currentState[i] = 0;
+    currentState[i] = 0;
     _connected[i] = 0;
     _sixButtonMode[i] = false;
     _ignoreCycles[i] = 0;
-    _pinSelect[i] = true;
   }
 }
 
-word SegaControllers32U4::getStateMD(byte gp)
+void SegaControllers32U4::readState()
 {
-  // "Normal" Six button controller reading routine, done a bit differently in this project
-  // Cycle  TH out  TR in  TL in  D3 in  D2 in  D1 in  D0 in
-  // 0      LO      Start  A      0      0      Down   Up      
-  // 1      HI      C      B      Right  Left   Down   Up
-  // 2      LO      Start  A      0      0      Down   Up      (Check connected and read Start and A in this cycle)
-  // 3      HI      C      B      Right  Left   Down   Up      (Read B, C and directions in this cycle)
-  // 4      LO      Start  A      0      0      0      0       (Check for six button controller in this cycle)
-  // 5      HI      C      B      Mode   X      Y      Z       (Read X,Y,Z and Mode in this cycle)    
-  // 6      LO      ---    ---    ---    ---    ---    ---      
-  // 7      HI      ---    ---    ---    ---    ---    ---    
-
-  // Set the select pin low/high
-  _pinSelect[gp] = !_pinSelect[gp];
-  (!_pinSelect[gp]) ? *_portSelect[gp] &= ~_maskSelect[gp] : *_portSelect[gp] |= _maskSelect[gp]; // Set LOW on even cycle, HIGH on uneven cycle
+  // Set the select pins low/high
+  _pinSelect = !_pinSelect;
+  if(!_pinSelect) {
+    PORTE &= ~B01000000;
+    PORTC &= ~B01000000;
+  } else {
+    PORTE |=  B01000000;
+    PORTC |=  B01000000;
+  }
 
   // Short delay to stabilise outputs in controller
   delayMicroseconds(SC_CYCLE_DELAY);
 
-  // Read input register(s)
-  _inputReg[0] = *_pinInputs[gp][0];
-  _inputReg[1] = *_pinInputs[gp][1];
+  // Read all input registers
+  _inputReg1 = PINF;
+  _inputReg2 = PINB;
+  _inputReg3 = PIND;
 
-  if(_ignoreCycles[gp] <= 0)
+  readPort1();
+  readPort2();
+}
+
+// "Normal" Six button controller reading routine, done a bit differently in this project
+// Cycle  TH out  TR in  TL in  D3 in  D2 in  D1 in  D0 in
+// 0      LO      Start  A      0      0      Down   Up      
+// 1      HI      C      B      Right  Left   Down   Up
+// 2      LO      Start  A      0      0      Down   Up      (Check connected and read Start and A in this cycle)
+// 3      HI      C      B      Right  Left   Down   Up      (Read B, C and directions in this cycle)
+// 4      LO      Start  A      0      0      0      0       (Check for six button controller in this cycle)
+// 5      HI      C      B      Mode   X      Y      Z       (Read X,Y,Z and Mode in this cycle)    
+// 6      LO      ---    ---    ---    ---    ---    ---      
+// 7      HI      ---    ---    ---    ---    ---    ---    
+
+void SegaControllers32U4::readPort1()
+{
+  if(_ignoreCycles[0] <= 0)
   {
-    if(_pinSelect[gp]) // Select pin is HIGH
+    if(_pinSelect) // Select pin is HIGH
     {
-      if(_connected[gp])
+      if(_connected[0])
       {
         // Check if six button mode is active
-        if(_sixButtonMode[gp])
+        if(_sixButtonMode[0])
         {
           // Read input pins for X, Y, Z, Mode
-          (bitRead(*_pinInputs[gp][SC_PIN1_BIT], _bitInputs[gp][SC_PIN1_BIT]) == LOW) ? _currentState[gp] |= SC_BTN_Z : _currentState[gp] &= ~SC_BTN_Z;
-          (bitRead(*_pinInputs[gp][SC_PIN2_BIT], _bitInputs[gp][SC_PIN2_BIT]) == LOW) ? _currentState[gp] |= SC_BTN_Y : _currentState[gp] &= ~SC_BTN_Y;
-          (bitRead(*_pinInputs[gp][SC_PIN3_BIT], _bitInputs[gp][SC_PIN3_BIT]) == LOW) ? _currentState[gp] |= SC_BTN_X : _currentState[gp] &= ~SC_BTN_X;
-          (bitRead(*_pinInputs[gp][SC_PIN4_BIT], _bitInputs[gp][SC_PIN4_BIT]) == LOW) ? _currentState[gp] |= SC_BTN_MODE : _currentState[gp] &= ~SC_BTN_MODE;
-          _sixButtonMode[gp] = false;
-          _ignoreCycles[gp] = 2; // Ignore the two next cycles (cycles 6 and 7 in table above)
+          (bitRead(_inputReg1, DB9_PIN1_BIT1) == LOW) ? currentState[0] |= SC_BTN_Z : currentState[0] &= ~SC_BTN_Z;
+          (bitRead(_inputReg1, DB9_PIN2_BIT1) == LOW) ? currentState[0] |= SC_BTN_Y : currentState[0] &= ~SC_BTN_Y;
+          (bitRead(_inputReg1, DB9_PIN3_BIT1) == LOW) ? currentState[0] |= SC_BTN_X : currentState[0] &= ~SC_BTN_X;
+          (bitRead(_inputReg1, DB9_PIN4_BIT1) == LOW) ? currentState[0] |= SC_BTN_MODE : currentState[0] &= ~SC_BTN_MODE;
+          _sixButtonMode[0] = false;
+          _ignoreCycles[0] = 2; // Ignore the two next cycles (cycles 6 and 7 in table above)
         }
         else
         {
           // Read input pins for Up, Down, Left, Right, B, C
-          (bitRead(*_pinInputs[gp][SC_PIN1_BIT], _bitInputs[gp][SC_PIN1_BIT]) == LOW) ? _currentState[gp] |= SC_BTN_UP : _currentState[gp] &= ~SC_BTN_UP;
-          (bitRead(*_pinInputs[gp][SC_PIN2_BIT], _bitInputs[gp][SC_PIN2_BIT]) == LOW) ? _currentState[gp] |= SC_BTN_DOWN : _currentState[gp] &= ~SC_BTN_DOWN;
-          (bitRead(*_pinInputs[gp][SC_PIN3_BIT], _bitInputs[gp][SC_PIN3_BIT]) == LOW) ? _currentState[gp] |= SC_BTN_LEFT : _currentState[gp] &= ~SC_BTN_LEFT;
-          (bitRead(*_pinInputs[gp][SC_PIN4_BIT], _bitInputs[gp][SC_PIN4_BIT]) == LOW) ? _currentState[gp] |= SC_BTN_RIGHT : _currentState[gp] &= ~SC_BTN_RIGHT;
-          (bitRead(*_pinInputs[gp][SC_PIN6_BIT], _bitInputs[gp][SC_PIN6_BIT]) == LOW) ? _currentState[gp] |= SC_BTN_B : _currentState[gp] &= ~SC_BTN_B;
-          (bitRead(*_pinInputs[gp][SC_PIN9_BIT], _bitInputs[gp][SC_PIN9_BIT]) == LOW) ? _currentState[gp] |= SC_BTN_C : _currentState[gp] &= ~SC_BTN_C;
+          (bitRead(_inputReg1, DB9_PIN1_BIT1) == LOW) ? currentState[0] |= SC_BTN_UP : currentState[0] &= ~SC_BTN_UP;
+          (bitRead(_inputReg1, DB9_PIN2_BIT1) == LOW) ? currentState[0] |= SC_BTN_DOWN : currentState[0] &= ~SC_BTN_DOWN;
+          (bitRead(_inputReg1, DB9_PIN3_BIT1) == LOW) ? currentState[0] |= SC_BTN_LEFT : currentState[0] &= ~SC_BTN_LEFT;
+          (bitRead(_inputReg1, DB9_PIN4_BIT1) == LOW) ? currentState[0] |= SC_BTN_RIGHT : currentState[0] &= ~SC_BTN_RIGHT;
+          (bitRead(_inputReg2, DB9_PIN6_BIT1) == LOW) ? currentState[0] |= SC_BTN_B : currentState[0] &= ~SC_BTN_B;
+          (bitRead(_inputReg2, DB9_PIN9_BIT1) == LOW) ? currentState[0] |= SC_BTN_C : currentState[0] &= ~SC_BTN_C;
         }
       }
       else // No Mega Drive controller is connected, use SMS/Atari mode
       {
         // Clear current state
-        _currentState[gp] = 0;
+        currentState[0] = 0;
         
         // Read input pins for Up, Down, Left, Right, Fire1, Fire2
-        if (bitRead(*_pinInputs[gp][SC_PIN1_BIT], _bitInputs[gp][SC_PIN1_BIT]) == LOW) { _currentState[gp] |= SC_BTN_UP; }
-        if (bitRead(*_pinInputs[gp][SC_PIN2_BIT], _bitInputs[gp][SC_PIN2_BIT]) == LOW) { _currentState[gp] |= SC_BTN_DOWN; }
-        if (bitRead(*_pinInputs[gp][SC_PIN3_BIT], _bitInputs[gp][SC_PIN3_BIT]) == LOW) { _currentState[gp] |= SC_BTN_LEFT; }
-        if (bitRead(*_pinInputs[gp][SC_PIN4_BIT], _bitInputs[gp][SC_PIN4_BIT]) == LOW) { _currentState[gp] |= SC_BTN_RIGHT; }
-        if (bitRead(*_pinInputs[gp][SC_PIN6_BIT], _bitInputs[gp][SC_PIN6_BIT]) == LOW) { _currentState[gp] |= SC_BTN_A; }
-        if (bitRead(*_pinInputs[gp][SC_PIN9_BIT], _bitInputs[gp][SC_PIN9_BIT]) == LOW) { _currentState[gp] |= SC_BTN_B; }
+        if (bitRead(_inputReg1, DB9_PIN1_BIT1) == LOW) { currentState[0] |= SC_BTN_UP; }
+        if (bitRead(_inputReg1, DB9_PIN2_BIT1) == LOW) { currentState[0] |= SC_BTN_DOWN; }
+        if (bitRead(_inputReg1, DB9_PIN3_BIT1) == LOW) { currentState[0] |= SC_BTN_LEFT; }
+        if (bitRead(_inputReg1, DB9_PIN4_BIT1) == LOW) { currentState[0] |= SC_BTN_RIGHT; }
+        if (bitRead(_inputReg2, DB9_PIN6_BIT1) == LOW) { currentState[0] |= SC_BTN_A; }
+        if (bitRead(_inputReg2, DB9_PIN9_BIT1) == LOW) { currentState[0] |= SC_BTN_B; }
       }
     }
     else // Select pin is LOW
     {
       // Check if a controller is connected
-      _connected[gp] = (bitRead(*_pinInputs[gp][SC_PIN3_BIT], _bitInputs[gp][SC_PIN3_BIT]) == LOW && bitRead(*_pinInputs[gp][SC_PIN4_BIT], _bitInputs[gp][SC_PIN4_BIT]) == LOW);
+      _connected[0] = (bitRead(_inputReg1, DB9_PIN3_BIT1) == LOW && bitRead(_inputReg1, DB9_PIN4_BIT1) == LOW);
       
       // Check for six button mode
-      _sixButtonMode[gp] = (bitRead(*_pinInputs[gp][SC_PIN1_BIT], _bitInputs[gp][SC_PIN1_BIT]) == LOW && bitRead(*_pinInputs[gp][SC_PIN2_BIT], _bitInputs[gp][SC_PIN2_BIT]) == LOW);
+      _sixButtonMode[0] = (bitRead(_inputReg1, DB9_PIN1_BIT1) == LOW && bitRead(_inputReg1, DB9_PIN2_BIT1) == LOW);
       
       // Read input pins for A and Start 
-      if(_connected[gp])
+      if(_connected[0])
       {
-        if(!_sixButtonMode[gp])
+        if(!_sixButtonMode[0])
         {
-          (bitRead(*_pinInputs[gp][SC_PIN6_BIT], _bitInputs[gp][SC_PIN6_BIT]) == LOW) ? _currentState[gp] |= SC_BTN_A : _currentState[gp] &= ~SC_BTN_A;
-          (bitRead(*_pinInputs[gp][SC_PIN9_BIT], _bitInputs[gp][SC_PIN9_BIT]) == LOW) ? _currentState[gp] |= SC_BTN_START : _currentState[gp] &= ~SC_BTN_START; 
+          (bitRead(_inputReg2, DB9_PIN6_BIT1) == LOW) ? currentState[0] |= SC_BTN_A : currentState[0] &= ~SC_BTN_A;
+          (bitRead(_inputReg2, DB9_PIN9_BIT1) == LOW) ? currentState[0] |= SC_BTN_START : currentState[0] &= ~SC_BTN_START; 
         }
       }
     }
   }
   else
   {
-    _ignoreCycles[gp]--;
+    _ignoreCycles[0]--;
   }
-
-  return _currentState[gp];
 }
+
+void SegaControllers32U4::readPort2()
+{
+  if(_ignoreCycles[1] <= 0)
+  {
+    if(_pinSelect) // Select pin is HIGH
+    {
+      if(_connected[1])
+      {
+        // Check if six button mode is active
+        if(_sixButtonMode[1])
+        {
+          // Read input pins for X, Y, Z, Mode
+          (bitRead(_inputReg3, DB9_PIN1_BIT2) == LOW) ? currentState[1] |= SC_BTN_Z : currentState[1] &= ~SC_BTN_Z;
+          (bitRead(_inputReg3, DB9_PIN2_BIT2) == LOW) ? currentState[1] |= SC_BTN_Y : currentState[1] &= ~SC_BTN_Y;
+          (bitRead(_inputReg3, DB9_PIN3_BIT2) == LOW) ? currentState[1] |= SC_BTN_X : currentState[1] &= ~SC_BTN_X;
+          (bitRead(_inputReg3, DB9_PIN4_BIT2) == LOW) ? currentState[1] |= SC_BTN_MODE : currentState[1] &= ~SC_BTN_MODE;
+          _sixButtonMode[1] = false;
+          _ignoreCycles[1] = 2; // Ignore the two next cycles (cycles 6 and 7 in table above)
+        }
+        else
+        {
+          // Read input pins for Up, Down, Left, Right, B, C
+          (bitRead(_inputReg3, DB9_PIN1_BIT2) == LOW) ? currentState[1] |= SC_BTN_UP : currentState[1] &= ~SC_BTN_UP;
+          (bitRead(_inputReg3, DB9_PIN2_BIT2) == LOW) ? currentState[1] |= SC_BTN_DOWN : currentState[1] &= ~SC_BTN_DOWN;
+          (bitRead(_inputReg3, DB9_PIN3_BIT2) == LOW) ? currentState[1] |= SC_BTN_LEFT : currentState[1] &= ~SC_BTN_LEFT;
+          (bitRead(_inputReg3, DB9_PIN4_BIT2) == LOW) ? currentState[1] |= SC_BTN_RIGHT : currentState[1] &= ~SC_BTN_RIGHT;
+          (bitRead(_inputReg3, DB9_PIN6_BIT2) == LOW) ? currentState[1] |= SC_BTN_B : currentState[1] &= ~SC_BTN_B;
+          (bitRead(_inputReg3, DB9_PIN9_BIT2) == LOW) ? currentState[1] |= SC_BTN_C : currentState[1] &= ~SC_BTN_C;
+        }
+      }
+      else // No Mega Drive controller is connected, use SMS/Atari mode
+      {
+        // Clear current state
+        currentState[1] = 0;
+        
+        // Read input pins for Up, Down, Left, Right, Fire1, Fire2
+        if (bitRead(_inputReg3, DB9_PIN1_BIT2) == LOW) { currentState[1] |= SC_BTN_UP; }
+        if (bitRead(_inputReg3, DB9_PIN2_BIT2) == LOW) { currentState[1] |= SC_BTN_DOWN; }
+        if (bitRead(_inputReg3, DB9_PIN3_BIT2) == LOW) { currentState[1] |= SC_BTN_LEFT; }
+        if (bitRead(_inputReg3, DB9_PIN4_BIT2) == LOW) { currentState[1] |= SC_BTN_RIGHT; }
+        if (bitRead(_inputReg3, DB9_PIN6_BIT2) == LOW) { currentState[1] |= SC_BTN_A; }
+        if (bitRead(_inputReg3, DB9_PIN9_BIT2) == LOW) { currentState[1] |= SC_BTN_B; }
+      }
+    }
+    else // Select pin is LOW
+    {
+      // Check if a controller is connected
+      _connected[1] = (bitRead(_inputReg3, DB9_PIN3_BIT2) == LOW && bitRead(_inputReg3, DB9_PIN4_BIT2) == LOW);
+      
+      // Check for six button mode
+      _sixButtonMode[1] = (bitRead(_inputReg3, DB9_PIN1_BIT2) == LOW && bitRead(_inputReg3, DB9_PIN2_BIT2) == LOW);
+      
+      // Read input pins for A and Start 
+      if(_connected[1])
+      {
+        if(!_sixButtonMode[1])
+        {
+          (bitRead(_inputReg3, DB9_PIN6_BIT2) == LOW) ? currentState[1] |= SC_BTN_A : currentState[1] &= ~SC_BTN_A;
+          (bitRead(_inputReg3, DB9_PIN9_BIT2) == LOW) ? currentState[1] |= SC_BTN_START : currentState[1] &= ~SC_BTN_START; 
+        }
+      }
+    }
+  }
+  else
+  {
+    _ignoreCycles[1]--;
+  }
+}
+

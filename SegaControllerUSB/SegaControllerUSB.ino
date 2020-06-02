@@ -49,7 +49,6 @@ SegaController32U4 controller;
 
 // Set up USB HID gamepad
 Gamepad_ Gamepad;
-bool usbUpdate = false; // Should gamepad data be sent to USB?
 
 // Controller states
 word currentState = 0;

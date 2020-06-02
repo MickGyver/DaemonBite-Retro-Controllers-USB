@@ -57,10 +57,8 @@ SegaControllers32U4 controllers;
 
 // Set up USB HID gamepads
 Gamepad_ Gamepad[2];
-bool usbUpdate[2] = {false,false}; // Should gamepad data be sent to USB?
 
-// Controller states
-word currentState[2] = {0,0};
+// Controller previous states
 word lastState[2] = {1,1};
 
 void setup()
@@ -69,23 +67,22 @@ void setup()
     Gamepad[gp].reset();
 }
 
-void loop()
+void loop() 
 {
-  for(byte gp=0; gp<=1; gp++) {
-    currentState[gp] = controllers.getStateMD(gp);
-    sendState(gp);
-  }
+  controllers.readState();
+  sendState(0);
+  sendState(1);
 }
 
 void sendState(byte gp)
 {
   // Only report controller state if it has changed
-  if (currentState[gp] != lastState[gp])
+  if (controllers.currentState[gp] != lastState[gp])
   {
-    Gamepad[gp]._GamepadReport.buttons = currentState[gp] >> 5;
-    Gamepad[gp]._GamepadReport.Y = ((currentState[gp] & SC_BTN_DOWN) >> SC_BIT_DOWN) - ((currentState[gp] & SC_BTN_UP) >> SC_BIT_UP);
-    Gamepad[gp]._GamepadReport.X = ((currentState[gp] & SC_BTN_RIGHT) >> SC_BIT_RIGHT) - ((currentState[gp] & SC_BTN_LEFT) >> SC_BIT_LEFT);
+    Gamepad[gp]._GamepadReport.buttons = controllers.currentState[gp] >> 5;
+    Gamepad[gp]._GamepadReport.Y = ((controllers.currentState[gp] & SC_BTN_DOWN) >> SC_BIT_DOWN) - ((controllers.currentState[gp] & SC_BTN_UP) >> SC_BIT_UP);
+    Gamepad[gp]._GamepadReport.X = ((controllers.currentState[gp] & SC_BTN_RIGHT) >> SC_BIT_RIGHT) - ((controllers.currentState[gp] & SC_BTN_LEFT) >> SC_BIT_LEFT);
     Gamepad[gp].send();
-    lastState[gp] = currentState[gp];
+    lastState[gp] = controllers.currentState[gp];
   }
 }

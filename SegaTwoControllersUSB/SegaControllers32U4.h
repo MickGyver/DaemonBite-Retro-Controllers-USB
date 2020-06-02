@@ -64,7 +64,7 @@ enum
   DB9_PIN3_BIT2 = 1,
   DB9_PIN4_BIT2 = 0,
   DB9_PIN6_BIT2 = 4,
-  DB9_PIN9_BIT2 = 6
+  DB9_PIN9_BIT2 = 7
 };
 
 const byte SC_CYCLE_DELAY = 10; // Delay (µs) between setting the select pin and reading the button pins
@@ -72,25 +72,23 @@ const byte SC_CYCLE_DELAY = 10; // Delay (µs) between setting the select pin an
 class SegaControllers32U4 {
   public:
     SegaControllers32U4(void);
-
-    word getStateMD(byte);
+    void readState();
+    word currentState[2];
 
   private:
-    word _currentState[2];
+    void readPort1();
+    void readPort2();
 
-    byte volatile * const _ddrSelect[2] =  { &DDRE, &DDRC }; 
-    byte volatile * const _portSelect[2] = { &PORTE, &PORTC }; 
-    const byte _maskSelect[2] = {B01000000, B01000000}; 
-    boolean _pinSelect[2];
+    boolean _pinSelect;
 
     byte _ignoreCycles[2];
 
     boolean _connected[2];
     boolean _sixButtonMode[2];
 
-    byte volatile * const _pinInputs[2][7] = { {&PINF,&PINF,&PINF,&PINF,&PINB,&PINB}, {&PIND,&PIND,&PIND,&PIND,&PIND,&PIND} }; 
-    byte _bitInputs[2][7] = { {7,6,5,4,3,1}, {3,2,1,0,4,7} };
-    byte _inputReg[2];
+    byte _inputReg1;
+    byte _inputReg2;
+    byte _inputReg3;
 };
 
 #endif

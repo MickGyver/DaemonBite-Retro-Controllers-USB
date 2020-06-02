@@ -24,9 +24,9 @@
 #include "Gamepad.h"
 
 #define GAMEPAD_COUNT 2 // Set to 1 or 2 depending if you want to make a 1 or 2 port adapter
-#define SELECT_PAUSE  3 // How many microseconds to wait after setting select lines? (2µs is enough according to the Saturn developer's manual)
-                        // 20µs is required for Retrobit wired controllers
-//#define RETROBIT      // Uncomment to support the Retro Bit 2.4GHz controller (this will increase lag a lot)
+#define SELECT_PAUSE 20 // How many microseconds to wait after setting select lines? (2µs is enough according to the Saturn developer's manual)
+                        // 20µs is a "safe" value that seems to work for original Saturn controllers and Retrobit wired controllers
+//#define RETROBIT_WL   // Uncomment to support the Retro Bit 2.4GHz wireless controller (this will increase lag a lot)
  
 #define UP    0x01
 #define DOWN  0x02
@@ -73,7 +73,7 @@ Saturn (P2)    Arduino Pro Micro
 9 GND         GND
 
 NOTE: The receiver of the Retro Bit 2.4GHz controller needs to be plugged
-      in after the adapter has been connected to USB and the RETROBIT
+      in after the adapter has been connected to USB and the RETROBIT_WL
       define needs to be uncommented.
 ------------------------------------------------------------------------- */
 
@@ -138,7 +138,7 @@ void loop() { while(1)
     }
   }
 
-  #ifdef RETROBIT
+  #ifdef RETROBIT_WL
     // This delay is needed for the retro bit 2.4GHz wireless controller, making it more or less useless with this adapter
     delay(17);
   #endif
