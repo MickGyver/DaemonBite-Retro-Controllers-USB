@@ -100,7 +100,7 @@ void setup()
   PORTD |=  B10010000;
 
   // Set B1 and B3 as outputs and set them HIGH (select pins)
-  PORTD |=  B00001010; 
+  PORTB |=  B00001010; 
   DDRB  |=  B00001010;
 
   // Wait for the controller(s) to settle

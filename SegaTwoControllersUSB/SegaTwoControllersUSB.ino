@@ -67,12 +67,12 @@ void setup()
     Gamepad[gp].reset();
 }
 
-void loop() 
+void loop() { while(1)
 {
   controllers.readState();
   sendState(0);
   sendState(1);
-}
+}}
 
 void sendState(byte gp)
 {
