@@ -2,12 +2,13 @@
 ## (modified version that supports 5 SNES controllers)
 
 ## Introduction
-Based on the excellent work in the original project, this version will support 5 SNES gamepads at the same time.
+Based on the excellent work in the original project found here: https://github.com/MickGyver/DaemonBite-Retro-Controllers-USB this version will support 5 SNES gamepads at the same time.
 
-Work around for this issue:
+This is using a workaround for this issue:
 https://github.com/MickGyver/DaemonBite-Retro-Controllers-USB/issues/3
 
 "The CDC Serial uses 3 endpoints. This means you can add up to 3 devices for the 32u4 and 1 for the 8/16/32u2. If you add more, some will be ignored."
+https://github.com/NicoHood/HID/issues/205
 
 I found a fix, that others have used when creating usb keyboards. It disables the CDC to free up resources. https://github.com/gdsports/usb-metamorph/tree/master/USBSerPassThruLine
 
