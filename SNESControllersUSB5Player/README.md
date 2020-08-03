@@ -1,4 +1,4 @@
-# DaemonBite SNES/NES USB Controller adapter
+# DaemonBite SNES/NES USB Controller adapter  (modified version that supports 5 SNES controllers)
 ## Introduction
 With this simple to build  adapter you can connect NES gamepads to a PC, Raspberry PI, MiSTer FPGA etc. The Arduino Pro Micro has very low lag when configured as a USB gamepad and it is plug n' play once it has been programmed. 
 
@@ -9,7 +9,7 @@ With this simple to build  adapter you can connect NES gamepads to a PC, Raspber
 - Micro USB cable
 
 ## Wiring
-![Assemble1](images/snes-usb-adapter-wiring.png)
+![Assemble1](images/snes-usb-adapter-wiring -5player.png)
 
 ## License
 This project is licensed under the GNU General Public License v3.0.
