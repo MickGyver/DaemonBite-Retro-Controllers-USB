@@ -1,5 +1,5 @@
 # 5x DaemonBite SNES/NES USB Controller adapter  
-# (modified version that supports 5 SNES controllers)
+## (modified version that supports 5 SNES controllers)
 
 ## Introduction
 Based on the excellent work in the original project, this version will support 5 SNES gamepads at the same time.
@@ -23,6 +23,12 @@ With this simple to build  adapter you can connect NES gamepads to a PC, Raspber
 
 ## Updated 5-port Wiring
 ![Assemble1](images/snes-usb-adapter-wiring%20-5player.png)
+
+## Example using tribal tap 5 port tap
+ -In my case, I built this into an old tribal tap device.  I removed the IC (which never actually supported all 5 ports) and wired the arduino into the existing PCB in place of the right pins.  The board fits right in, and usb routes out the back of the device in place of the original connector.
+![Assemble1](images/tap1.jpg)
+![Assemble1](images/tap2.jpg)
+![Assemble1](images/tap3.jpg)
 
 ## License
 This project is licensed under the GNU General Public License v3.0.
