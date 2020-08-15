@@ -41,7 +41,6 @@ const char *gp_serial = "NES/SNES to USB";
 #define RIGHT 0x08
 
 #define NTT_CONTROL_BIT 0x20000000
-#define NES_CONTROL_BIT 0xF3A0
 
 // Wire it all up according to the following table:
 //
@@ -70,7 +69,7 @@ Gamepad_ Gamepad[GAMEPAD_COUNT];
 uint32_t buttons[GAMEPAD_COUNT_MAX] = {0,0,0,0};
 uint32_t buttonsPrev[GAMEPAD_COUNT_MAX] = {0,0,0,0};
 uint8_t gpBit[GAMEPAD_COUNT_MAX] = {B10000000,B01000000,B00100000,B00010000};
-ControllerType controllerType[GAMEPAD_COUNT_MAX] = {NONE,NONE,NONE,NONE};
+ControllerType controllerType[GAMEPAD_COUNT_MAX] = {NONE,NONE};
 uint32_t btnBits[32] = {0x10,0x40,0x400,0x800,UP,DOWN,LEFT,RIGHT,0x20,0x80,0x100,0x200,          // Standard SNES controller
                         0x10000000,0x20000000,0x40000000,0x80000000,0x1000,0x2000,0x4000,0x8000, // NTT Data Keypad (NDK10)
                         0x10000,0x20000,0x40000,0x80000,0x100000,0x200000,0x400000,0x800000,
@@ -162,7 +161,7 @@ void detectControllerTypes()
     // Check controller types and set buttonCount to max needed
     for(gp=0; gp<GAMEPAD_COUNT; gp++) 
     {
-      if(buttons[gp] & NES_CONTROL_BIT) {   // NES
+      if((buttons[gp] & 0xF3A0) == 0xF3A0) {   // NES
         if(controllerType[gp] != SNES && controllerType[gp] != NTT)
           controllerType[gp] = NES;
         if(buttonCountNew < 8)
