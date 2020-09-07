@@ -58,20 +58,20 @@ void setup()
 { 
 }
 
-void loop()
+void loop() { while(1)
 {
   currentState = controller.getStateMD();
   sendState();
-}
+}}
 
 void sendState()
 {
   // Only report controller state if it has changed
   if (currentState != lastState)
   {
-    Gamepad._GamepadReport.buttons = currentState >> 5;
-    Gamepad._GamepadReport.Y = ((currentState & SC_BTN_DOWN) >> SC_BIT_DOWN) - ((currentState & SC_BTN_UP) >> SC_BIT_UP);
-    Gamepad._GamepadReport.X = ((currentState & SC_BTN_RIGHT) >> SC_BIT_RIGHT) - ((currentState & SC_BTN_LEFT) >> SC_BIT_LEFT);
+    Gamepad._GamepadReport.buttons = currentState >> 4;
+    Gamepad._GamepadReport.Y = ((currentState & SC_BTN_DOWN) >> SC_BIT_SH_DOWN) - ((currentState & SC_BTN_UP) >> SC_BIT_SH_UP);
+    Gamepad._GamepadReport.X = ((currentState & SC_BTN_RIGHT) >> SC_BIT_SH_RIGHT) - ((currentState & SC_BTN_LEFT) >> SC_BIT_SH_LEFT);
     Gamepad.send();
     lastState = currentState;
   }

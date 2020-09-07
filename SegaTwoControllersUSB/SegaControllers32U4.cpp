@@ -89,7 +89,7 @@ void SegaControllers32U4::readState()
 // 3      HI      C      B      Right  Left   Down   Up      (Read B, C and directions in this cycle)
 // 4      LO      Start  A      0      0      0      0       (Check for six button controller in this cycle)
 // 5      HI      C      B      Mode   X      Y      Z       (Read X,Y,Z and Mode in this cycle)    
-// 6      LO      ---    ---    ---    ---    ---    ---      
+// 6      LO      ---    ---    ---    ---    ---    Home    (Home only for 8bitdo wireless gamepads)      
 // 7      HI      ---    ---    ---    ---    ---    ---    
 
 void SegaControllers32U4::readPort1()
@@ -157,7 +157,10 @@ void SegaControllers32U4::readPort1()
   }
   else
   {
-    _ignoreCycles[0]--;
+    if(_ignoreCycles[0]-- == 2) // Decrease the ignore cycles counter and read 8bitdo home in first "ignored" cycle, this cycle is unused on normal 6-button controllers
+    {
+      (bitRead(_inputReg1, DB9_PIN1_BIT1) == LOW) ? currentState[0] |= SC_BTN_HOME : currentState[0] &= ~SC_BTN_HOME;
+    }
   }
 }
 
@@ -226,7 +229,10 @@ void SegaControllers32U4::readPort2()
   }
   else
   {
-    _ignoreCycles[1]--;
+    if(_ignoreCycles[1]-- == 2) // Decrease the ignore cycles counter and read 8bitdo home in first "ignored" cycle, this cycle is unused on normal 6-button controllers
+    {
+      (bitRead(_inputReg3, DB9_PIN1_BIT2) == LOW) ? currentState[1] |= SC_BTN_HOME : currentState[1] &= ~SC_BTN_HOME;
+    }
   }
 }
 

@@ -21,6 +21,7 @@
  *  
  */
 
+#include <EEPROM.h>
 #include "Gamepad.h"
 
 // ATT: 20 chars max (including NULL at the end) according to Arduino source code.
@@ -28,6 +29,8 @@
 const char *gp_serial = "CD32/C= to USB";
 
 #define BUTTON_READ_DELAY 100 // Button read delay in µs
+#define MODE_CD32 0
+#define MODE_3BUTTON 42
 
 // Controller DB9 pins (looking face-on to the end of the plug):
 //
@@ -72,9 +75,11 @@ uint8_t buttonsPrev = 0;
 
 // Timing
 uint32_t microsButtons = 0;
+uint32_t millisStart = 0;
 
 // CD32 controller detection
 uint8_t detection = 0;
+uint8_t mode = MODE_CD32;
 
 void setup()
 {
@@ -87,59 +92,69 @@ void setup()
   PORTD |=  B10011101; // high to enable internal pull-up
   DDRF  &= ~B11000000; // input
   PORTF |=  B11000000; // high to enable internal pull-up
+
+  delay(500);
+  startupConfig();
 }
 
-void loop()
+void loop() { while(1)
 {
   // Read X and Y axes
   axes = ~(PIND & B00011101);
 
-  // See if enough time has passed since last button read
-  if(micros() - microsButtons > BUTTON_READ_DELAY)
+  if(mode == MODE_CD32)
   {
-    // Set pin 6 (clock, PD7) and pin 5 (latch, PF7) as output low
-    PORTD &= ~B10000000; // low to disable internal pull-up (will become low when set as output)
-    DDRD  |=  B10000000; // output
-    PORTF &= ~B10000000; // low to disable internal pull-up (will become low when set as output)
-    DDRF  |=  B10000000; // output
-    delayMicroseconds(40);
+    // See if enough time has passed since last button read
+    if(micros() - microsButtons > BUTTON_READ_DELAY)
+    {
+      // Set pin 6 (clock, PD7) and pin 5 (latch, PF7) as output low
+      PORTD &= ~B10000000; // low to disable internal pull-up (will become low when set as output)
+      DDRD  |=  B10000000; // output
+      PORTF &= ~B10000000; // low to disable internal pull-up (will become low when set as output)
+      DDRF  |=  B10000000; // output
+      delayMicroseconds(40);
 
-    // Clear buttons
-    buttons = 0;
+      // Clear buttons
+      buttons = 0;
 
-    // Read buttons
-    (PINF & B01000000) ? buttons &= ~B00000010 : buttons |= B00000010; // Blue (2)
-    sendClock();
-    (PINF & B01000000) ? buttons &= ~B00000001 : buttons |= B00000001; // Red (1)
-    sendClock();
-    (PINF & B01000000) ? buttons &= ~B00001000 : buttons |= B00001000; // Yellow (4)
-    sendClock();
-    (PINF & B01000000) ? buttons &= ~B00000100 : buttons |= B00000100; // Green (3)
-    sendClock();
-    (PINF & B01000000) ? buttons &= ~B00100000 : buttons |= B00100000; // RTrig (6)
-    sendClock();
-    (PINF & B01000000) ? buttons &= ~B00010000 : buttons |= B00010000; // LTrig (5)
-    sendClock();
-    (PINF & B01000000) ? buttons &= ~B01000000 : buttons |= B01000000; // Play (7)
-    sendClock();
-    (PINF & B01000000) ? detection |= B00000001 : detection &= ~B00000001; // First detection bit (should be 1)
-    sendClock();
-    (PINF & B01000000) ? detection |= B00000010 : detection &= ~B00000010; // Second detection bit (should be 0)
+      // Read buttons
+      (PINF & B01000000) ? buttons &= ~B00000010 : buttons |= B00000010; // Blue (2)
+      sendClock();
+      (PINF & B01000000) ? buttons &= ~B00000001 : buttons |= B00000001; // Red (1)
+      sendClock();
+      (PINF & B01000000) ? buttons &= ~B00001000 : buttons |= B00001000; // Yellow (4)
+      sendClock();
+      (PINF & B01000000) ? buttons &= ~B00000100 : buttons |= B00000100; // Green (3)
+      sendClock();
+      (PINF & B01000000) ? buttons &= ~B00100000 : buttons |= B00100000; // RTrig (6)
+      sendClock();
+      (PINF & B01000000) ? buttons &= ~B00010000 : buttons |= B00010000; // LTrig (5)
+      sendClock();
+      (PINF & B01000000) ? buttons &= ~B01000000 : buttons |= B01000000; // Play (7)
+      sendClock();
+      (PINF & B01000000) ? detection |= B00000001 : detection &= ~B00000001; // First detection bit (should be 1)
+      sendClock();
+      (PINF & B01000000) ? detection |= B00000010 : detection &= ~B00000010; // Second detection bit (should be 0)
 
-    // Set pin 5 (latch, PF7) and pin 6 (clock, PD7) as input with pull-ups
-    DDRF  &= ~B10000000; // input
-    PORTF |=  B10000000; // high to enable internal pull-up
-    DDRD  &= ~B10000000; // input
-    PORTD |=  B10000000; // high to enable internal pull-up 
-    delayMicroseconds(40);
+      // Set pin 5 (latch, PF7) and pin 6 (clock, PD7) as input with pull-ups
+      DDRF  &= ~B10000000; // input
+      PORTF |=  B10000000; // high to enable internal pull-up
+      DDRD  &= ~B10000000; // input
+      PORTD |=  B10000000; // high to enable internal pull-up 
+      delayMicroseconds(40);
 
-    // Was a CD32 gamepad detected? If not, read button 1 and 2 "normally".
-    if(detection != B0000001)
-      buttons = ~( ((PIND & B10000000) >> 7) | ((PINF & B01000000) >> 5) | B11111100 );
-    
-    microsButtons = micros();
+      // Was a CD32 gamepad detected? If not, read button 1 and 2 "normally".
+      if(detection != B0000001)
+        buttons = ~( ((PIND & B10000000) >> 7) | ((PINF & B01000000) >> 5) | B11111100 );
+      
+      microsButtons = micros();
+    }
   }
-
+  else
+  {
+    buttons = ~( ((PIND & B10000000) >> 7) | ((PINF & B11000000) >> 5) | B11111000 );
+  }
+  
   // Has any buttons changed state?
   if (buttons != buttonsPrev)
   {
@@ -163,7 +178,7 @@ void loop()
     Gamepad.send();
     usbUpdate = false;
   }
-}
+}}
 
 void sendClock()
 {
@@ -172,4 +187,29 @@ void sendClock()
   delayMicroseconds(10);
   PORTD &= ~B10000000; // Disable pull-up
   delayMicroseconds(40); 
+}
+
+void startupConfig()
+{
+  // Read current mode from eeprom
+  mode = EEPROM.read(0);
+  if(mode != MODE_3BUTTON)
+    mode = MODE_CD32;
+
+  // Get time
+  millisStart = millis();
+  
+  // Wait as long as button 1 is pressed
+  while(!(PIND & B10000000)) 
+  {
+    if(millis() - millisStart > 5000) // Button 1 has been pressed for more than 5 seconds
+    {
+      // Toggle mode and save to EEPROM
+      (mode == MODE_3BUTTON) ? mode = MODE_CD32 : mode = MODE_3BUTTON;
+      EEPROM.update(0,mode);
+      return;
+    }
+  }
+
+  return;
 }

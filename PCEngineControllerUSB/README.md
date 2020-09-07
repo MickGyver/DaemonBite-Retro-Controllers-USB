@@ -1,9 +1,7 @@
 # DaemonBite PC Engine / TurboGrafx-16 Controllers To USB Adapter
 
 ## Introduction
-This is a simple to build adapter for connecting PC Engine / TurboGrafx-16 controllers to USB. 
-
-NOTE: This adapter is in BETA and not yet properly tested.
+This is a simple to build adapter for connecting PC Engine / TurboGrafx-16 controllers to USB with turbo functionality support.
 
 The input lag for this adapter is minimal (should be less 1ms average connected to MiSTer).
 

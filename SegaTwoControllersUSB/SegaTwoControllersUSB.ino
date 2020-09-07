@@ -79,9 +79,9 @@ void sendState(byte gp)
   // Only report controller state if it has changed
   if (controllers.currentState[gp] != lastState[gp])
   {
-    Gamepad[gp]._GamepadReport.buttons = controllers.currentState[gp] >> 5;
-    Gamepad[gp]._GamepadReport.Y = ((controllers.currentState[gp] & SC_BTN_DOWN) >> SC_BIT_DOWN) - ((controllers.currentState[gp] & SC_BTN_UP) >> SC_BIT_UP);
-    Gamepad[gp]._GamepadReport.X = ((controllers.currentState[gp] & SC_BTN_RIGHT) >> SC_BIT_RIGHT) - ((controllers.currentState[gp] & SC_BTN_LEFT) >> SC_BIT_LEFT);
+    Gamepad[gp]._GamepadReport.buttons = controllers.currentState[gp] >> 4;
+    Gamepad[gp]._GamepadReport.Y = ((controllers.currentState[gp] & SC_BTN_DOWN) >> SC_BIT_SH_DOWN) - ((controllers.currentState[gp] & SC_BTN_UP) >> SC_BIT_SH_UP);
+    Gamepad[gp]._GamepadReport.X = ((controllers.currentState[gp] & SC_BTN_RIGHT) >> SC_BIT_SH_RIGHT) - ((controllers.currentState[gp] & SC_BTN_LEFT) >> SC_BIT_SH_LEFT);
     Gamepad[gp].send();
     lastState[gp] = controllers.currentState[gp];
   }

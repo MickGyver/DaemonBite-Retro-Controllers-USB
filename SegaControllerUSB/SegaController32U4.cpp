@@ -62,7 +62,7 @@ word SegaController32U4::getStateMD()
   // 3      HI      C      B      Right  Left   Down   Up      (Read B, C and directions in this cycle)
   // 4      LO      Start  A      0      0      0      0       (Check for six button controller in this cycle)
   // 5      HI      C      B      Mode   X      Y      Z       (Read X,Y,Z and Mode in this cycle)    
-  // 6      LO      ---    ---    ---    ---    ---    ---      
+  // 6      LO      ---    ---    ---    ---    ---    Home    (Home only for 8bitdo wireless gamepads)      
   // 7      HI      ---    ---    ---    ---    ---    ---    
 
   // Set the select pin low/high
@@ -139,7 +139,10 @@ word SegaController32U4::getStateMD()
   }
   else
   {
-    _ignoreCycles--;
+    if(_ignoreCycles-- == 2) // Decrease the ignore cycles counter and read 8bitdo home in first "ignored" cycle, this cycle is unused on normal 6-button controllers
+    {
+      (bitRead(_inputReg1, DB9_PIN1_BIT) == LOW) ? _currentState |= SC_BTN_HOME : _currentState &= ~SC_BTN_HOME;
+    }
   }
 
   return _currentState;
