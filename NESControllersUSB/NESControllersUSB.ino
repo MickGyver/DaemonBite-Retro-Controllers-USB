@@ -27,7 +27,7 @@
 // Additionally serial number is used to differentiate arduino projects to have different button maps!
 const char *gp_serial = "NES to USB";
 
-#define GAMEPAD_COUNT 1      // NOTE: No more than TWO gamepads are possible at the moment due to a USB HID issue.
+#define GAMEPAD_COUNT 2      // NOTE: No more than TWO gamepads are possible at the moment due to a USB HID issue.
 #define GAMEPAD_COUNT_MAX 4  // NOTE: For some reason, can't have more than two gamepads without serial breaking. Can someone figure out why?
                              //       (It has something to do with how Arduino handles HID devices)
 #define BUTTON_COUNT       8 // Standard NES controller has four buttons and four axes, totalling 8
