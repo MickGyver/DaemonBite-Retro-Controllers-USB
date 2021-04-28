@@ -27,6 +27,8 @@
 // Additionally serial number is used to differentiate arduino projects to have different button maps!
 const char *gp_serial = "NES to USB";
 
+//#define DEBUG
+
 #define GAMEPAD_COUNT 2      // NOTE: No more than TWO gamepads are possible at the moment due to a USB HID issue.
 #define GAMEPAD_COUNT_MAX 4  // NOTE: For some reason, can't have more than two gamepads without serial breaking. Can someone figure out why?
                              //       (It has something to do with how Arduino handles HID devices)
@@ -67,6 +69,12 @@ uint8_t gp = 0;
 // Timing
 uint32_t microsButtons = 0;
 
+#ifdef DEBUG
+uint32_t microsStart = 0;
+uint32_t microsEnd = 0;
+uint8_t counter = 0;
+#endif
+
 void setup()
 {
   // Setup latch and clock pins (2,3 or PD1, PD0)
@@ -77,7 +85,13 @@ void setup()
   DDRF  &= ~B11110000; // inputs
   PORTF |=  B11110000; // enable internal pull-ups
 
-  delay(500);
+  #ifdef DEBUG
+  Serial.begin(115200);
+  delay(2000);
+  #endif
+
+  // Short delay to let controllers stabilize
+  delay(50);
 }
 
 void loop() { while(1)
@@ -85,6 +99,10 @@ void loop() { while(1)
   // See if enough time has passed since last button read
   if((micros() - microsButtons) > BUTTON_READ_DELAY)
   {    
+    #ifdef DEBUG
+    microsStart = micros();
+    #endif
+    
     // Pulse latch
     sendLatch();
 
@@ -109,6 +127,14 @@ void loop() { while(1)
     }
 
     microsButtons = micros();
+
+    #ifdef DEBUG
+    microsEnd = micros();
+    if(counter < 20) {
+      Serial.println(microsEnd-microsStart);
+      counter++;
+    }
+    #endif
   }
 }}
 

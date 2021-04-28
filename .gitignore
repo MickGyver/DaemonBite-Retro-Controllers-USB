@@ -1,3 +1,5 @@
 # Ignore VS Code folders
 .vscode
 .build
+# Ignore HEX files
+*.hex
