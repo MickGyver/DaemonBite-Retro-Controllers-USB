@@ -2,6 +2,8 @@
 ## Introduction
 This is a collection of easy to build adapters for connecting SNES, NES, Mega Drive/Genesis (3/6-button), Master System, Atari, Commodore, Amiga (incl. CD32) controllers to USB. Support for more controllers is on the way (Sega Saturn, NeoGeo etc.).
 
+**PLEASE NOTE!** This project is open source and was aimed as being a DIY friendly option to game controller adapters. I kindly ask you not to make a business out of selling adapters using this code without contacting me first. I sell assembled adapters at https://daemonbite.com. I'm currently working on ways to be able to supply more adapters.
+
 The input lag for these adapters is minimal. Here is the result of the Sega controller adapter from a test with a 1ms polling rate on a MiSTer:
 
 | Controller | Samples | Average | Max | Min | Std Dev |
