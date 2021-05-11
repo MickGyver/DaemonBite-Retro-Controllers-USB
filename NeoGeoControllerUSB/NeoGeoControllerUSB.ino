@@ -41,10 +41,10 @@ uint8_t  axesPrev = 0x0f;
 uint8_t  axesBits[4] = {0x10,0x20,0x40,0x80};
 uint32_t axesMillis[4];
 
-uint16_t buttonsDirect = 0;
-uint16_t buttons = 0;
-uint16_t buttonsPrev = 0;
-uint16_t buttonsBits[12] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80,0x100,0x200,0x400,0x800};
+uint8_t buttonsDirect = 0;
+uint8_t buttons = 0;
+uint8_t buttonsPrev = 0;
+uint8_t buttonsBits[8] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
 uint32_t buttonsMillis[12];
 
 #ifdef DEBUG
@@ -63,6 +63,8 @@ void setup()
   PORTD |=  B10011111; // Enable internal pull-up resistors
   DDRB  &= ~B01111110; // Set PB1-PB6 as inputs
   PORTB |=  B01111110; // Enable internal pull-up resistors
+  DDRC  &= ~B01000000; // Set PC6 as input
+  PORTC |=  B01000000; // Enable internal pull-up resistors
 
   // Debounce selector switch (currently disabled)
   DDRE  &= ~B01000000; // Pin 7 as input
@@ -88,7 +90,7 @@ void loop()
   {
     // Read axis and button inputs (bitwise NOT results in a 1 when button/axis pressed)
     axesDirect = ~(PINF & B11110000);
-    buttonsDirect = ~((PIND & B00011111) | ((PIND & B10000000) << 4) | ((PINB & B01111110) << 4));
+    buttonsDirect = ~((PIND & B10011111) | (PINC & B01000000) | ((PINB & B00000010) << 4));
 
     if(debounce)
     {
@@ -106,7 +108,7 @@ void loop()
       }
       
       // Debounce buttons
-      for(pin=0; pin<12; pin++)
+      for(pin=0; pin<8; pin++)
       {
         // Check if the current pin state is different to the stored state and that enough time has passed since last change
         if((buttonsDirect & buttonsBits[pin]) != (buttons & buttonsBits[pin]) && (millisNow - buttonsMillis[pin]) > DEBOUNCE_TIME)
