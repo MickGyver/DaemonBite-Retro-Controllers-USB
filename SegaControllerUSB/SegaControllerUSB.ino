@@ -62,6 +62,7 @@ void loop() { while(1)
 {
   currentState = controller.getStateMD();
   sendState();
+  delay(4);
 }}
 
 void sendState()
