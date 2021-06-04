@@ -27,21 +27,27 @@
 // Additionally serial number is used to differentiate arduino projects to have different button maps!
 const char *gp_serial = "NES/SNES to USB";
 
-#define DEBUG
+//#define DEBUG
 
 #define GAMEPAD_COUNT      2 // NOTE: To have more than 2 two gamepads you need to disable the CDC of the Arduino, there is a specific project for that.
 #define GAMEPAD_COUNT_MAX  2  
 #define BUTTON_READ_DELAY 20 // Delay between button reads in µs
-#define CYCLES_LATCH     128 // 12µs according to specs (8 seems to work fine) (1 cycle @ 16MHz takes 62.5ns so 62.5ns * 128 = 8000ns = 8µs)
-#define CYCLES_CLOCK      64 //  6µs according to specs (4 seems to work fine)
-#define CYCLES_PAUSE      64 //  6µs according to specs (4 seems to work fine)
+#define CYCLES_LATCH     128 // 128 12µs according to specs (8 seems to work fine) (1 cycle @ 16MHz takes 62.5ns so 62.5ns * 128 = 8000ns = 8µs)
+#define CYCLES_CLOCK      64 // 6µs according to specs (4 seems to work fine)
+#define CYCLES_PAUSE1     64 // 6µs according to specs (4 seems to work fine)
+#define CYCLES_PAUSE2     58 // 6µs according to specs (4 seems to work fine)
 
+#define BUTTONS  0
+#define AXES     1
 #define UP    0x01
 #define DOWN  0x02
 #define LEFT  0x04
 #define RIGHT 0x08
 
 #define DELAY_CYCLES(n) __builtin_avr_delay_cycles(n)
+
+inline void sendLatch() __attribute__((always_inline));
+inline void sendClock() __attribute__((always_inline));
 
 // Wire it all up according to the following table:
 //
@@ -93,15 +99,13 @@ void setup()
   // Setup data pins A0-A3 (PF7-PF4)
   DDRF  &= ~B11110000; // inputs
   PORTF |=  B11110000; // enable internal pull-ups
-  DDRC  &= ~B01000000; // input
-  PORTC |=  B01000000; // enable internal pull-up
 
   #ifdef DEBUG
   Serial.begin(115200);
   delay(2000);
   #endif
 
-  delay(3000);
+  delay(300);
   detectControllerTypes();
 }
 
@@ -118,10 +122,16 @@ void loop() { while(1)
     // Pulse latch
     sendLatch();
 
+    for(gp=0; gp<GAMEPAD_COUNT; gp++) {
+      buttons[gp][BUTTONS] = 0;
+      buttons[gp][AXES] = 0;
+    }
+
     for(uint8_t btn=0; btn<buttonCount; btn++)
     {
-      for(gp=0; gp<GAMEPAD_COUNT; gp++) 
-        (PINF & gpBit[gp]) ? buttons[gp][btnByte[btn]] &= ~btnBits[btn] : buttons[gp][btnByte[btn]] |= btnBits[btn];
+      for(gp=0; gp<GAMEPAD_COUNT; gp++) {
+        if((PINF & gpBit[gp])==0) buttons[gp][btnByte[btn]] |= btnBits[btn];
+      }
       sendClock();
     }
 
@@ -129,22 +139,22 @@ void loop() { while(1)
     for(gp=0; gp<GAMEPAD_COUNT; gp++) 
     {
       if(controllerType[gp] == NES) {    // NES
-        bitWrite(buttons[gp][0], 1, bitRead(buttons[gp][0], 0));
-        bitWrite(buttons[gp][0], 0, bitRead(buttons[gp][0], 2));
-        buttons[gp][0] &= 0xC3;
+        bitWrite(buttons[gp][BUTTONS], 1, bitRead(buttons[gp][BUTTONS], 0));
+        bitWrite(buttons[gp][BUTTONS], 0, bitRead(buttons[gp][BUTTONS], 2));
+        buttons[gp][BUTTONS] &= 0xC3;
       }
     }
 
     for(gp=0; gp<GAMEPAD_COUNT; gp++)
     {
       // Has any buttons changed state?
-      if (buttons[gp] != buttonsPrev[gp])
+      if (buttons[gp][BUTTONS] != buttonsPrev[gp][BUTTONS] || buttons[gp][AXES] != buttonsPrev[gp][AXES])
       {
-        Gamepad[gp]._GamepadReport.buttons = buttons[gp][0];
-        Gamepad[gp]._GamepadReport.Y = ((buttons[gp][1] & DOWN) >> 1) - (buttons[gp][1] & UP);
-        Gamepad[gp]._GamepadReport.X = ((buttons[gp][1] & RIGHT) >> 3) - ((buttons[gp][1] & LEFT) >> 2);
-        buttonsPrev[gp][0] = buttons[gp][0];
-        buttonsPrev[gp][1] = buttons[gp][1];
+        Gamepad[gp]._GamepadReport.buttons = buttons[gp][BUTTONS];
+        Gamepad[gp]._GamepadReport.Y = ((buttons[gp][AXES] & DOWN) >> 1) - (buttons[gp][AXES] & UP);
+        Gamepad[gp]._GamepadReport.X = ((buttons[gp][AXES] & RIGHT) >> 3) - ((buttons[gp][AXES] & LEFT) >> 2);
+        buttonsPrev[gp][BUTTONS] = buttons[gp][BUTTONS];
+        buttonsPrev[gp][AXES] = buttons[gp][AXES];
         Gamepad[gp].send();
       }
     }
@@ -207,7 +217,7 @@ void sendLatch()
   PORTD |=  B00000010; // Set HIGH
   DELAY_CYCLES(CYCLES_LATCH); 
   PORTD &= ~B00000010; // Set LOW
-  DELAY_CYCLES(CYCLES_PAUSE);
+  DELAY_CYCLES(CYCLES_PAUSE2);
 }
 
 void sendClock()
@@ -216,5 +226,5 @@ void sendClock()
   PORTD |=  B10000001; // Set HIGH
   DELAY_CYCLES(CYCLES_CLOCK); 
   PORTD &= ~B10000001; // Set LOW
-  DELAY_CYCLES(CYCLES_PAUSE); 
+  DELAY_CYCLES(CYCLES_PAUSE1); 
 }

@@ -27,7 +27,7 @@
 // Additionally serial number is used to differentiate arduino projects to have different button maps!
 const char *gp_serial = "NES/SNES to USB";
 
-#define DEBUG
+//#define DEBUG
 
 #define GAMEPAD_COUNT 1      // NOTE: To have more than 2 two gamepads you need to disable the CDC of the Arduino.
 #define GAMEPAD_COUNT_MAX 4  
