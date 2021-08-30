@@ -193,7 +193,7 @@ void detectControllerTypes()
     // Check controller types and set buttonCount to max needed
     for(gp=0; gp<GAMEPAD_COUNT; gp++) 
     {
-      if((buttons[gp][0] & 0xF3A) == 0xF3A) {   // NES
+      if((buttons[gp][0] & 0x3A) == 0x3A) {   // NES
         if(controllerType[gp] != SNES)
           controllerType[gp] = NES;
         if(buttonCountNew < 8)
