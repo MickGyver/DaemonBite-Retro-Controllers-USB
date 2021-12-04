@@ -139,7 +139,7 @@ void loop() { while(1)
         buttons[gp] &= 0xC3F;
       }
       else if(controllerType[gp] == NTT) // SNES NTT Data Keypad
-        buttons[gp] &= 0x3FFFFFF;
+        buttons[gp] &= 0xFFFFFFF;
       else                               // SNES Gamepad
         buttons[gp] &= 0xFFF; 
     }
@@ -236,8 +236,8 @@ void sendLatch()
 void sendClock()
 {
   // Send a clock pulse to (S)NES controller(s)
-  PORTD |=  B10000001; // Set HIGH
+  PORTD |=  B00000001; // Set HIGH
   DELAY_CYCLES(CYCLES_CLOCK); 
-  PORTD &= ~B10000001; // Set LOW
+  PORTD &= ~B00000001; // Set LOW
   DELAY_CYCLES(CYCLES_PAUSE);
 }
