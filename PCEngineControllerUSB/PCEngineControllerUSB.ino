@@ -73,12 +73,16 @@ Gamepad_ Gamepad[GAMEPAD_COUNT];
 
 // Controllers
 uint8_t buttons[2][2]     = {{0,0},{0,0}};
-uint8_t buttonsPrev[2][2] = {{0,0},{0,0}};
+uint8_t buttonsPrevDPad[2] = {0,0};
+uint8_t buttonsPrevA[2] = {0,0};
+uint8_t buttonsPrevB[2] = {0,0};
 uint8_t gp = 0;
 
 // Turbo timing
 uint32_t microsNow = 0;
 uint32_t microsEnable = 0;
+
+int suma[2]={5,5};
 
 void setup()
 { 
@@ -133,8 +137,11 @@ void loop() { while(1)
   // Send data to USB if values have changed
   for(gp=0; gp<GAMEPAD_COUNT; gp++)
   {
+
+    suma[gp] = ((buttons[gp][0] & DOWN) >> DOWN_SH) + ((buttons[gp][0] & UP) >> UP_SH) + ((buttons[gp][0] & RIGHT) >> RIGHT_SH) + ((buttons[gp][0] & LEFT) >> LEFT_SH);
+    
     // Has any buttons changed state?
-    if (buttons[gp][0] != buttonsPrev[gp][0] || buttons[gp][1] != buttonsPrev[gp][1] )
+/*    if (buttons[gp][0] != buttonsPrev[gp][0] || buttons[gp][1] != buttonsPrev[gp][1] )
     {
       Gamepad[gp]._GamepadReport.buttons = buttons[gp][1];
       Gamepad[gp]._GamepadReport.Y = ((buttons[gp][0] & DOWN) >> DOWN_SH) - ((buttons[gp][0] & UP) >> UP_SH);
@@ -143,6 +150,24 @@ void loop() { while(1)
       buttonsPrev[gp][1] = buttons[gp][1];
       Gamepad[gp].send();
     }
+*/
+
+    if ((suma[gp] == 4) && (buttons[gp][1]!=buttonsPrevB[gp])){
+      Gamepad[gp]._GamepadReport.buttons = (buttons[gp][1] & B00001111) << 4;  
+      buttonsPrevB[gp] = buttons[gp][1];
+      Gamepad[gp].send();
+    }
+    else if ((suma[gp] < 4) && ((buttons[gp][0]!=buttonsPrevDPad[gp]) || (buttons[gp][1]!=buttonsPrevA[gp]))){
+      Gamepad[gp]._GamepadReport.buttons = (buttons[gp][1] & B00001111);
+      Gamepad[gp]._GamepadReport.Y = ((buttons[gp][0] & DOWN) >> DOWN_SH) - ((buttons[gp][0] & UP) >> UP_SH);
+      Gamepad[gp]._GamepadReport.X = ((buttons[gp][0] & RIGHT) >> RIGHT_SH) - ((buttons[gp][0] & LEFT) >> LEFT_SH);  
+      buttonsPrevDPad[gp] = buttons[gp][0];
+      buttonsPrevA[gp] = buttons[gp][1];
+      Gamepad[gp].send();
+    }
+
+
+    
   }
 
 }}
