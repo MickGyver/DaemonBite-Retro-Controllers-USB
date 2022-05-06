@@ -34,7 +34,7 @@ extern const char* gp_serial;
 // The numbers after colon are bit fields, meaning how many bits the field uses.
 // Remove those if there are problems
 typedef struct {
-  uint8_t buttons : 4;
+  uint8_t buttons : 8;
   int8_t X;
   int8_t Y;  
 } GamepadReport;
